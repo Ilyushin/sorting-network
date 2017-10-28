@@ -48,13 +48,10 @@ int main(int argc, char *argv[]) {
                     right = i + d;
                     if (checkPar(currentComp, left, right) == 1) {
                         currentComp.clear();
-                        currentComp.push_back(i);
-                        currentComp.push_back(i + d);
                         ++numberTacts;
-                    } else {
-                        currentComp.push_back(i);
-                        currentComp.push_back(i + d);
                     }
+                    currentComp.push_back(left);
+                    currentComp.push_back(right);
 
                     std::cout << left << " " << right << std::endl;
                     ++numberComparators;
@@ -75,7 +72,6 @@ int main(int argc, char *argv[]) {
 }
 
 int checkPar(int_vec_t &arr, int left, int right) {
-
     int_vec_itr result = std::find(arr.begin(), arr.end(), left);
     if (result != arr.end()) {
         return 1;
@@ -88,4 +84,6 @@ int checkPar(int_vec_t &arr, int left, int right) {
 
     return 0;
 }
+
+
 
