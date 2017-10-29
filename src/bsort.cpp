@@ -1,6 +1,7 @@
 #include <iostream>
 #include <math.h>
 #include <vector>
+#include  <gtest/gtest.h>
 
 typedef std::vector<int> int_vec_t;
 typedef std::vector<int>::iterator int_vec_itr;
@@ -68,7 +69,8 @@ int main(int argc, char *argv[]) {
     std::cout << numberComparators << std::endl;
     std::cout << numberTacts << std::endl;
 
-    return 0;
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }
 
 int checkPar(int_vec_t &arr, int left, int right) {
@@ -85,5 +87,20 @@ int checkPar(int_vec_t &arr, int left, int right) {
     return 0;
 }
 
+TEST(BasicTest, PossiblePermutations) {
+    for (int n = 2; n <= 24; ++n) {
+        for(int i = 0; i<n; ++i) {
+            int_vec_t arr(n);
+            std::fill(arr.begin(), arr.begin()+i, 1);
+            std::sort (arr.begin(), arr.end());
+            do {
+
+            } while ( std::next_permutation(arr.begin(), arr.end()) );
+            std::cout << std::endl;
+        }
+    }
+
+    EXPECT_EQ(1, 0);
+};
 
 
