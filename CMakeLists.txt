@@ -21,7 +21,7 @@ set(SOURCE_FILES
         src/permutation.cpp
         include/sortingNetwork.h
         src/sortingNetwork.cpp
-        src/main.cpp)
+        src/main.cpp src/Point.cpp include/Point.h)
 
 add_executable(sortingNetwork ${SOURCE_FILES})
 target_link_libraries(sortingNetwork gtest)

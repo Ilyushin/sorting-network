@@ -17,9 +17,8 @@ set(SOURCE_FILES
         include/sortingNetwork.h
         src/sortingNetwork.cpp
         tests/TestSortingNetwork.cpp
-        src/main.cpp
         )
 
 add_executable(sortingNetwork ${SOURCE_FILES})
 target_link_libraries(sortingNetwork gtest)
-add_test( SortingNetwork ./TestSortingNetwork.cpp )
+add_test( TestSortingNetwork ./TestSortingNetwork.cpp )
