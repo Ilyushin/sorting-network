@@ -4,10 +4,7 @@ project(sortingNetwork)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED on)
 
-add_subdirectory(
-        lib/googletest
-        tests
-)
+add_subdirectory(lib/googletest)
 
 include_directories(
         include
@@ -15,14 +12,14 @@ include_directories(
 )
 
 set(SOURCE_FILES
-        include/bsort.h
         src/bsort.cpp
         include/permutation.h
-        src/permutation.cpp
         include/sortingNetwork.h
         src/sortingNetwork.cpp
-        src/main.cpp)
+        tests/TestSortingNetwork.cpp
+        src/main.cpp
+        )
 
 add_executable(sortingNetwork ${SOURCE_FILES})
 target_link_libraries(sortingNetwork gtest)
-add_test(sortingNetwork sortingNetwork)
+add_test( SortingNetwork ./TestSortingNetwork.cpp )
