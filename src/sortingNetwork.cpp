@@ -1,9 +1,6 @@
 #include "../include/sortingNetwork.h"
 #include <iostream>
 #include <math.h>
-#include <vector>
-#include <algorithm>
-#include <gtest/gtest.h>
 
 SortingNetwork::SortingNetwork(){
     _size = 0;
