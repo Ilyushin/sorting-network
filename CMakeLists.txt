@@ -9,6 +9,9 @@ add_subdirectory(
         tests
 )
 
+set(CMAKE_C_COMPILER /usr/local/bin/mpicc)
+set(CMAKE_CXX_COMPILER /usr/local/bin/mpic++)
+
 include_directories(
         include
         lib/googletest/googletest/include
@@ -21,7 +24,9 @@ set(SOURCE_FILES
         src/permutation.cpp
         include/sortingNetwork.h
         src/sortingNetwork.cpp
-        src/main.cpp src/point.cpp include/point.h)
+        src/main.cpp
+        src/point.cpp
+        include/point.h)
 
 add_executable(sortingNetwork ${SOURCE_FILES})
 target_link_libraries(sortingNetwork gtest)
