@@ -5,24 +5,13 @@
 #ifndef SORTINGNETWORK_POINT_H
 #define SORTINGNETWORK_POINT_H
 
-
-class Point {
-private:
-    float _coord[2];
-    int _index;
-
-public:
-    Point();
-    Point(float x, float y, int index);
-
-    void setX(float x){_coord[0] = x;};
-    void setY(float y){_coord[1] = y;};
-    void setIndx(int index){_index = index;};
-
-    float getX(){return _coord[0];};
-    float getY(){return _coord[1];};
-    int getIndx(){return _index;};
+struct Point {
+    float x;
+    float y;
+    int index;
 };
+
+Point *createPoint(float x, float y, int index);
 
 
 #endif //SORTINGNETWORK_POINT_H
