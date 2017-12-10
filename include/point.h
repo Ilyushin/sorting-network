@@ -11,6 +11,7 @@ struct Point {
     int index;
 };
 
+// TODO Need to write a test
 Point *createPoint(float x, float y, int index);
 
 

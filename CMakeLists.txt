@@ -25,7 +25,7 @@ set(SOURCE_FILES
         include/sortingNetwork.h
         src/sortingNetwork.cpp
         src/main.cpp
-        include/point.h src/point.cpp)
+        include/point.h src/point.cpp src/heapSort.cpp include/heapSort.h)
 
 add_executable(sortingNetwork ${SOURCE_FILES})
 target_link_libraries(sortingNetwork gtest)

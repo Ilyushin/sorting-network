@@ -1,28 +1,20 @@
 #include <iostream>
 #include <sortingNetwork.h>
 #include <mpi.h>
-#include "point.h"
+#include "../include/point.h"
+#include "../include/heapSort.h"
 
 typedef std::vector<Point> point_vec_t;
 
 // Iterate since 0 to n1, 1 to n2 and create Points of a grid
-void fillCoord(point_vec_t &points, const int *n1, const int *n2);
+void fillCoord(int *size, Point *points, const int *n1, const int *n2);
 
 // Returns a next coordinate which was calculated using a function:
 //      coord = (counter - 1)*delta
-float getNextCoordinate(int counter, int delta);
+float getNextCoordinate(int i);
 
 //TODO Move some piece of code to macroses or function
 int main(int argc, char *argv[]) {
-
-    //PARALLEL AREA
-
-    MPI_Init(&argc, &argv);
-    int rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-    int processors;
-    MPI_Comm_size(MPI_COMM_WORLD, &processors);
 
     //if(rank == 0) {
     int n1 = 0;
@@ -54,8 +46,45 @@ int main(int argc, char *argv[]) {
     SortingNetwork network = SortingNetwork(size);
     network.buildSchedule();
 
-    point_vec_t points;
-    fillCoord(points, &n1, &n2);
+    Point points[size];
+    fillCoord(&size, points, &n1, &n2);
+
+    /*for(int i = 0; i < size; ++i){
+        std::cout << points[i].x << std::endl;
+    }*/
+
+    Point test[10] = {
+            *createPoint(1, 1, 0),
+            *createPoint(2, 2, 1),
+            *createPoint(4, 4, 2),
+            *createPoint(5, 5, 3),
+            *createPoint(6, 6, 4),
+            *createPoint(8, 8, 5),
+            *createPoint(9, 9, 6),
+            *createPoint(10, 10, 7),
+            *createPoint(11, 11, 8),
+            *createPoint(16, 16, 9)
+    };
+    for(int i = 0; i < 10; ++i){
+        //test[i] = *createPoint(i, i, i);
+        std::cout << test[i].x << std::endl;
+    }
+
+    heapSort(10, test, false);
+
+    std::cout << "******** After sort **********" << std::endl;
+
+    for(int i = 0; i < 10; ++i){
+        std::cout << test[i].x << std::endl;
+    }
+
+    //PARALLEL AREA
+    /*MPI_Init(&argc, &argv);
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    int processors;
+    MPI_Comm_size(MPI_COMM_WORLD, &processors);
 
     // Create a new type of MPI
     const int n = 3;
@@ -98,24 +127,32 @@ int main(int argc, char *argv[]) {
     //Free up the type
     MPI_Type_free(&MPI_PointType);
 
-
-    //}
-
-    MPI_Finalize();
+    MPI_Finalize();*/
 
     return 0;
 }
 
-void fillCoord(point_vec_t &points, const int *n1, const int *n2) {
-    for (int i = 0, j = 1; i < *n1 || j < *n2; ++i, ++j) {
-        points.push_back(*createPoint(
-                getNextCoordinate(i, 1),
-                getNextCoordinate(j, 1),
-                (i * (*n2) + j)));
+void fillCoord(int *size, Point *points, const int *n1, const int *n2) {
+    for (int i = 0, j = 0; i < *size; ++i, ++j) {
+        points[i] = *createPoint(
+                getNextCoordinate(j),
+                getNextCoordinate(j),
+                (i)
+        );
 
     }
+
+    /*for (int i = 0, j = *size - 1; i < *size; ++i, --j) {
+        points[i] = *createPoint(
+                getNextCoordinate(j),
+                getNextCoordinate(j),
+                (i)
+        );
+
+    }*/
 }
 
-float getNextCoordinate(int counter, int delta) {
-    return (float) (counter - 1) * delta;
+float getNextCoordinate(int i) {
+    float random = ((float) rand()) / (float) RAND_MAX;
+    return random + i;
 }

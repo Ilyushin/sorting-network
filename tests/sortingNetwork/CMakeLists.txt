@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(sortingNetwork)
+project(.)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED on)
@@ -19,6 +19,6 @@ set(SOURCE_FILES
         tests/TestSortingNetwork.cpp
         )
 
-add_executable(sortingNetwork ${SOURCE_FILES})
-target_link_libraries(sortingNetwork gtest)
-add_test( TestSortingNetwork ./TestSortingNetwork.cpp )
+add_executable(. ${SOURCE_FILES})
+target_link_libraries(. gtest)
+add_test( TestSortingNetwork testSortingNetwork.cpp)
