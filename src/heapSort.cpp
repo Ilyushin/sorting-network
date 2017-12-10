@@ -7,13 +7,26 @@ void heapify(int size, Point *arr, int i, bool byY) {
     int right = 2 * i + 2;
     int largest = i;
 
-    if (left <= size-1 && arr[left].x > arr[largest].x) {
-        largest = left;
-    };
+    if(byY == false) {
 
-    if (right <= size-1 && arr[right].x > arr[largest].x) {
-        largest = right;
-    };
+        if (left <= size - 1 && arr[left].x > arr[largest].x) {
+            largest = left;
+        };
+
+        if (right <= size - 1 && arr[right].x > arr[largest].x) {
+            largest = right;
+        };
+
+    } else {
+
+        if (left <= size - 1 && arr[left].y > arr[largest].y) {
+            largest = left;
+        };
+
+        if (right <= size - 1 && arr[right].y > arr[largest].y) {
+            largest = right;
+        };
+    }
 
     if (largest != i) {
         Point temp = arr[i];

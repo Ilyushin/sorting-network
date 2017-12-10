@@ -3,15 +3,16 @@
 #include <mpi.h>
 #include "../include/point.h"
 #include "../include/heapSort.h"
+#include "../include/quickSort.h"
 
 typedef std::vector<Point> point_vec_t;
 
 // Iterate since 0 to n1, 1 to n2 and create Points of a grid
-void fillCoord(int *size, Point *points, const int *n1, const int *n2);
+void fillCoord(int size, Point *points, const int n1, const int n2);
 
 // Returns a next coordinate which was calculated using a function:
 //      coord = (counter - 1)*delta
-float getNextCoordinate(int i);
+float getNextCoordinate(int i, int j);
 
 //TODO Move some piece of code to macroses or function
 int main(int argc, char *argv[]) {
@@ -47,39 +48,10 @@ int main(int argc, char *argv[]) {
     network.buildSchedule();
 
     Point points[size];
-    fillCoord(&size, points, &n1, &n2);
-
-    /*for(int i = 0; i < size; ++i){
-        std::cout << points[i].x << std::endl;
-    }*/
-
-    Point test[10] = {
-            *createPoint(1, 1, 0),
-            *createPoint(2, 2, 1),
-            *createPoint(4, 4, 2),
-            *createPoint(5, 5, 3),
-            *createPoint(6, 6, 4),
-            *createPoint(8, 8, 5),
-            *createPoint(9, 9, 6),
-            *createPoint(10, 10, 7),
-            *createPoint(11, 11, 8),
-            *createPoint(16, 16, 9)
-    };
-    for(int i = 0; i < 10; ++i){
-        //test[i] = *createPoint(i, i, i);
-        std::cout << test[i].x << std::endl;
-    }
-
-    heapSort(10, test, false);
-
-    std::cout << "******** After sort **********" << std::endl;
-
-    for(int i = 0; i < 10; ++i){
-        std::cout << test[i].x << std::endl;
-    }
+    fillCoord(size, points, n1, n2);
 
     //PARALLEL AREA
-    /*MPI_Init(&argc, &argv);
+    MPI_Init(&argc, &argv);
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
@@ -115,7 +87,11 @@ int main(int argc, char *argv[]) {
 
     int numberElem = size / processors;
     Point localPoints[numberElem];
-    MPI_Scatter(&points.front(), numberElem, MPI_PointType, &localPoints, numberElem, MPI_PointType, 0, MPI_COMM_WORLD);
+    MPI_Scatter(points, numberElem, MPI_PointType, &localPoints, numberElem, MPI_PointType, 0, MPI_COMM_WORLD);
+
+    if(numberElem <= 50000){
+        heapSort(numberElem, localPoints, false);
+    }
 
     std::cout << "CPU #" << rank << ":" << std::endl;
     for (int i = 0; i < numberElem; ++i) {
@@ -127,32 +103,21 @@ int main(int argc, char *argv[]) {
     //Free up the type
     MPI_Type_free(&MPI_PointType);
 
-    MPI_Finalize();*/
+    MPI_Finalize();
 
     return 0;
 }
 
-void fillCoord(int *size, Point *points, const int *n1, const int *n2) {
-    for (int i = 0, j = 0; i < *size; ++i, ++j) {
-        points[i] = *createPoint(
-                getNextCoordinate(j),
-                getNextCoordinate(j),
-                (i)
+void fillCoord(int size, Point *points, const int n1, const int n2) {
+    for (int i = 0, j = 0; (n1 > n2 ? i < n1 : j < n2) && i < size && j < size; ++i, ++j) {
+        points[i*n2+j] = *createPoint(
+                getNextCoordinate(i, j),
+                getNextCoordinate(i, j),
+                (i*n2+j)
         );
-
     }
-
-    /*for (int i = 0, j = *size - 1; i < *size; ++i, --j) {
-        points[i] = *createPoint(
-                getNextCoordinate(j),
-                getNextCoordinate(j),
-                (i)
-        );
-
-    }*/
 }
 
-float getNextCoordinate(int i) {
-    float random = ((float) rand()) / (float) RAND_MAX;
-    return random + i;
+float getNextCoordinate(int i, int j) {
+    return (rand() / (float)RAND_MAX * i) + j;
 }
