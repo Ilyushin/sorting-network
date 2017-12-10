@@ -8,7 +8,7 @@
 typedef std::vector<Point> point_vec_t;
 
 // Iterate since 0 to n1, 1 to n2 and create Points of a grid
-void fillCoord(int size, Point *points, const int n1, const int n2);
+void fillCoord(int size, Point *points, int cpu);
 
 // Returns a next coordinate which was calculated using a function:
 //      coord = (counter - 1)*delta
@@ -44,12 +44,6 @@ int main(int argc, char *argv[]) {
         ++size;
     }
 
-    SortingNetwork network = SortingNetwork(size);
-    network.buildSchedule();
-
-    Point points[size];
-    fillCoord(size, points, n1, n2);
-
     //PARALLEL AREA
     MPI_Init(&argc, &argv);
     int rank;
@@ -58,66 +52,40 @@ int main(int argc, char *argv[]) {
     int processors;
     MPI_Comm_size(MPI_COMM_WORLD, &processors);
 
-    // Create a new type of MPI
-    const int n = 3;
-    int blocklengths[n] = {1, 1, 1};
-    MPI_Datatype types[n] = {MPI_DOUBLE, MPI_DOUBLE, MPI_INT};
-    MPI_Datatype MPI_PointType_proto, MPI_PointType;
-    MPI_Aint offsets[n];
-
-    offsets[0] = offsetof(Point, x);
-    offsets[1] = offsetof(Point, y);
-    offsets[2] = offsetof(Point, index);
-
-    MPI_Type_create_struct(n, blocklengths, offsets, types, &MPI_PointType_proto);
-
-    // Resize the type so that its length matches the actual structure length
-
-    // Get the constructed type lower bound and extent
-    MPI_Aint lb, extent;
-    MPI_Type_get_extent(MPI_PointType_proto, &lb, &extent);
-
-    // Get the actual distance between to vector elements
-    // (this might not be the best way to do it - if so, substitute a better one)
-    extent = (char *) &points[1] - (char *) &points[0];
-
-    // Create a resized type whose extent matches the actual distance
-    MPI_Type_create_resized(MPI_PointType_proto, lb, extent, &MPI_PointType);
-    MPI_Type_commit(&MPI_PointType);
-
     int numberElem = size / processors;
     Point localPoints[numberElem];
-    MPI_Scatter(points, numberElem, MPI_PointType, &localPoints, numberElem, MPI_PointType, 0, MPI_COMM_WORLD);
-
-    if(numberElem <= 50000){
-        heapSort(numberElem, localPoints, false);
-    }
+    fillCoord(numberElem, localPoints, rank);
 
     std::cout << "CPU #" << rank << ":" << std::endl;
+
+    if (numberElem <= 50000) {
+        heapSort(numberElem, localPoints);
+        //quickSort(numberElem, localPoints, false);
+    }
+
     for (int i = 0; i < numberElem; ++i) {
-        std::cout << localPoints[i].x << std::endl;
+        std::cout << i << " " << localPoints[i].x << std::endl;
     }
 
     std::cout << std::endl;
-
-    //Free up the type
-    MPI_Type_free(&MPI_PointType);
 
     MPI_Finalize();
 
     return 0;
 }
 
-void fillCoord(int size, Point *points, const int n1, const int n2) {
-    for (int i = 0, j = 0; (n1 > n2 ? i < n1 : j < n2) && i < size && j < size; ++i, ++j) {
-        points[i*n2+j] = *createPoint(
-                getNextCoordinate(i, j),
-                getNextCoordinate(i, j),
-                (i*n2+j)
+void fillCoord(int size, Point *points, int cpu) {
+    int indx = cpu * size;
+    for (int i = 0; i < size; ++i) {
+        points[i] = *createPoint(
+                getNextCoordinate(indx, indx),
+                getNextCoordinate(indx, indx),
+                indx
         );
+        ++indx;
     }
 }
 
 float getNextCoordinate(int i, int j) {
-    return (rand() / (float)RAND_MAX * i) + j;
+    return (rand() / (float) RAND_MAX * i) + j;
 }
