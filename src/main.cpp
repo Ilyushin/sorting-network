@@ -3,6 +3,7 @@
 #include <mpi.h>
 #include "../include/point.h"
 #include "../include/heapSort.h"
+#include "parallelMergeSort.h"
 
 typedef std::vector<Point> point_vec_t;
 
@@ -55,17 +56,19 @@ int main(int argc, char *argv[]) {
     Point localPoints[numberElem];
     fillCoord(numberElem, localPoints, rank);
 
-    //if (numberElem <= 50000) {
-    heapSort(numberElem, localPoints);
-    //quickSort(numberElem, localPoints, false);
-    //}
+    if (numberElem <= 50000) {
+        heapSort(numberElem, localPoints);
+        //quickSort(numberElem, localPoints, false);
+    } else {
+        parallelMergeSort(numberElem, localPoints);
+    }
 
 
     MPI_Barrier(MPI_COMM_WORLD);
-    std::cout << "Before, CPU #" << rank << ":" << std::endl;
+    /*std::cout << "Before, CPU #" << rank << ":" << std::endl;
     for (int i = 0; i < numberElem; ++i) {
         std::cout << i << " " << localPoints[i].x << std::endl;
-    }
+    }*/
 
     std::cout << std::endl;
 
@@ -136,10 +139,10 @@ int main(int argc, char *argv[]) {
     MPI_Barrier(MPI_COMM_WORLD);
     heapSort(numberElem, resultPoints);
 
-    std::cout << "After, CPU #" << rank << ":" << std::endl;
+   /* std::cout << "After, CPU #" << rank << ":" << std::endl;
     for (int i = 0; i < numberElem; ++i) {
         std::cout << i << " " << resultPoints[i].x << std::endl;
-    }
+    }*/
 
     std::cout << std::endl;
 

@@ -1,5 +1,5 @@
 #include <iostream>
-#include "mergeSort.h"
+#include "parallelMergeSort.h"
 
 void merge(int i, int j, Point *arr)
 {
@@ -40,12 +40,18 @@ void *sort(void *arguments) {
     threadArgs1.arr = threadArgs->arr;
     threadArgs2.arr = threadArgs->arr;
 
-    threadArgs1.chunk->i = threadArgs->chunk->i;
-    threadArgs1.chunk->j = mid;
+    Chunk chunk1 = {
+            threadArgs->chunk->i,
+            mid,
+    };
 
-    threadArgs2.chunk->i = mid+1;
-    threadArgs2.chunk->j = threadArgs->chunk->j;
+    Chunk chunk2 = {
+            mid+1,
+            threadArgs->chunk->j,
+    };
 
+    threadArgs1.chunk = &chunk1;
+    threadArgs2.chunk = &chunk2;
 
     pthread_t tid1, tid2;
     int ret;
@@ -53,7 +59,7 @@ void *sort(void *arguments) {
 
     ret = pthread_create(&tid1, NULL, sort, &threadArgs1);
     if (ret) {
-        std::cout << __LINE__ << ' ' << __FUNCTION__ << " - unable to create thread - ret - " << ret << std::endl;
+        std::cout << __LINE__ << " function: " << __FUNCTION__ << " - unable to create thread - ret - " << ret << std::endl;
         exit(1);
     }
 
@@ -72,9 +78,7 @@ void *sort(void *arguments) {
 
 }
 
-//TODO Create parallel merge sort
-void mergeSort(int length, Point *arr, bool byY) {
-    int i;
+void parallelMergeSort(int length, Point *arr, bool byY) {
     Chunk chunkArray = {
             0,
             length - 1,
