@@ -7,6 +7,16 @@
 
 #include "./point.h"
 
+typedef struct chunk {
+    int i;
+    int j;
+} Chunk;
+
+typedef struct threadArgs {
+    Chunk *chunk;
+    Point *arr;
+} ThreadArgs;
+
 void mergeSort(int length, Point arr[], bool byY = false);
 
 

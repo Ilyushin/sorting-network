@@ -25,7 +25,14 @@ set(SOURCE_FILES
         include/sortingNetwork.h
         src/sortingNetwork.cpp
         src/main.cpp
-        include/point.h src/point.cpp src/heapSort.cpp include/heapSort.h src/quickSort.cpp include/quickSort.h src/mergeSort.cpp include/mergeSort.h)
+        include/point.h
+        src/point.cpp
+        src/heapSort.cpp
+        include/heapSort.h
+        src/quickSort.cpp
+        include/quickSort.h
+        src/mergeSort.cpp
+        include/mergeSort.h)
 
 add_executable(sortingNetwork ${SOURCE_FILES})
 target_link_libraries(sortingNetwork gtest)
