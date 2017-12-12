@@ -14,5 +14,4 @@ struct Point {
 // TODO Need to write a test
 Point *createPoint(float x, float y, int index);
 
-
 #endif //SORTINGNETWORK_POINT_H
