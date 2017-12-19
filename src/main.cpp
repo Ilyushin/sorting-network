@@ -201,11 +201,6 @@ int main(int argc, char *argv[]) {
     //Free up the type
     MPI_Type_free(&MPI_PointType);
 
-
-
-
-    std::cout << std::endl;
-
     MPI_Finalize();
 
     return 0;
