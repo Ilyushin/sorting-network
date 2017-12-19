@@ -26,7 +26,7 @@ void fillCoord(int realLength, int length, Point *points) {
     }
 
     // Add dummy points
-    for (;i < length; ++i) {
+    for (; i < length; ++i) {
         points[i] = *createPoint(
                 -1,
                 -1,
@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    int length = n1*n2;
+    int length = n1 * n2;
 
     //PARALLEL AREA
     MPI_Init(&argc, &argv);
@@ -77,14 +77,14 @@ int main(int argc, char *argv[]) {
     MPI_Comm_size(MPI_COMM_WORLD, &processors);
 
     int realLength = length;
-    if(length % processors!= 0){
+    if (length % processors != 0) {
         do {
             ++length;
-        } while(length % processors != 0);
+        } while (length % processors != 0);
     }
 
-    Point sortArray [length];
-    if(rank == 0) {
+    Point sortArray[length];
+    if (rank == 0) {
         fillCoord(realLength, length, sortArray);
     }
 
@@ -127,21 +127,18 @@ int main(int argc, char *argv[]) {
     }
 
     if (numberElem <= 50000) {
-    if (useQSort) {
-        quickSort(numberElem, localPoints);
-    } else {
-        heapSort(numberElem, localPoints);
-    }
+        if (useQSort) {
+            quickSort(numberElem, localPoints);
+        } else {
+            heapSort(numberElem, localPoints);
+        }
     } else {
         parallelMergeSort(numberElem, localPoints);
     }
 
-
-
-
     std::cout << std::endl;
 
-    if(processors > 1) {
+    if (processors > 1) {
 
         SortingNetwork *network = new SortingNetwork(processors);
         network->buildSchedule();
@@ -181,24 +178,31 @@ int main(int argc, char *argv[]) {
         }
 
         MPI_Barrier(MPI_COMM_WORLD);
-        //Free up the type
-        MPI_Type_free(&MPI_PointType);
-        if(useQSort){
-        quickSort(numberElem, resultPoints);
-    } else {
-        heapSort(numberElem, resultPoints);
-    }
+
+        if (useQSort) {
+            quickSort(numberElem, resultPoints);
+        } else {
+            heapSort(numberElem, resultPoints);
+        }
 
         std::cout << "After, CPU #" << rank << ":" << std::endl;
         for (int i = 0; i < numberElem; ++i) {
             std::cout << i << " " << resultPoints[i].x << std::endl;
-        };
+        }
+
     } else {
         std::cout << "After, CPU #" << rank << ":" << std::endl;
         for (int i = 0; i < numberElem; ++i) {
             std::cout << i << " " << localPoints[i].x << std::endl;
         }
-    }
+    };
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    //Free up the type
+    MPI_Type_free(&MPI_PointType);
+
+
+
 
     std::cout << std::endl;
 
