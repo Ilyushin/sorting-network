@@ -2,8 +2,9 @@
 #include <sortingNetwork.h>
 #include <mpi.h>
 #include "../include/point.h"
+#include "../include/quickSort.h"
 #include "../include/heapSort.h"
-#include "parallelMergeSort.h"
+#include "../include/parallelMergeSort.h"
 
 typedef std::vector<Point> point_vec_t;
 
@@ -29,20 +30,23 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
+    bool useQSort = false;
+    if (argc >= 4) {
+        for (int i = 3; i < argc; ++i) {
+            if (strcmp(argv[i], "-q") == 0) {
+                useQSort = true;
+                break;
+            }
+        }
+    }
+
     if (n1 > INT_MAX / n2) {
         std::cout << "A dimension of a network (n1, n2) is too big for calculating!\n";
         MPI_Finalize();
         return 0;
     }
 
-    int realLength = n1 * n2;
-    int length = realLength;
-    // Check the length is even or not
-    // If it's not, creating a dummy point
-    bool needDummy = false;
-    if (realLength % 2 != 0) {
-        ++length;
-    }
+    int length = n1*n2;
 
     //PARALLEL AREA
     MPI_Init(&argc, &argv);
@@ -56,98 +60,115 @@ int main(int argc, char *argv[]) {
     Point localPoints[numberElem];
     fillCoord(numberElem, localPoints, rank);
 
+    MPI_Barrier(MPI_COMM_WORLD);
+    std::cout << "Before, CPU #" << rank << ":" << std::endl;
+    for (int i = 0; i < numberElem; ++i) {
+        std::cout << i << " " << localPoints[i].x << std::endl;
+    }
+
     if (numberElem <= 50000) {
+    if (useQSort) {
+        quickSort(numberElem, localPoints);
+    } else {
         heapSort(numberElem, localPoints);
-        //quickSort(numberElem, localPoints, false);
+    }
     } else {
         parallelMergeSort(numberElem, localPoints);
     }
 
 
-    MPI_Barrier(MPI_COMM_WORLD);
-    /*std::cout << "Before, CPU #" << rank << ":" << std::endl;
-    for (int i = 0; i < numberElem; ++i) {
-        std::cout << i << " " << localPoints[i].x << std::endl;
-    }*/
+
 
     std::cout << std::endl;
 
-    SortingNetwork *network = new SortingNetwork(processors);
-    network->buildSchedule();
-    permutation_vec_t permutation = network->getPermutations();
+    if(processors > 1) {
 
-    // Create a new type of MPI
-    const int n = 3;
-    int blocklengths[n] = {1, 1, 1};
-    MPI_Datatype types[n] = {MPI_DOUBLE, MPI_DOUBLE, MPI_INT};
-    MPI_Datatype MPI_PointType_proto, MPI_PointType;
-    MPI_Aint offsets[n];
+        SortingNetwork *network = new SortingNetwork(processors);
+        network->buildSchedule();
+        permutation_vec_t permutation = network->getPermutations();
 
-    offsets[0] = offsetof(Point, x);
-    offsets[1] = offsetof(Point, y);
-    offsets[2] = offsetof(Point, index);
+        // Create a new type of MPI
+        const int n = 3;
+        int blocklengths[n] = {1, 1, 1};
+        MPI_Datatype types[n] = {MPI_DOUBLE, MPI_DOUBLE, MPI_INT};
+        MPI_Datatype MPI_PointType_proto, MPI_PointType;
+        MPI_Aint offsets[n];
 
-    MPI_Type_create_struct(n, blocklengths, offsets, types, &MPI_PointType_proto);
+        offsets[0] = offsetof(Point, x);
+        offsets[1] = offsetof(Point, y);
+        offsets[2] = offsetof(Point, index);
 
-    // Resize the type so that its length matches the actual structure length
+        MPI_Type_create_struct(n, blocklengths, offsets, types, &MPI_PointType_proto);
 
-    // Get the constructed type lower bound and extent
-    MPI_Aint lb, extent;
-    MPI_Type_get_extent(MPI_PointType_proto, &lb, &extent);
+        // Resize the type so that its length matches the actual structure length
 
-    // Get the actual distance between to vector elements
-    // (this might not be the best way to do it - if so, substitute a better one)
-    extent = (char *) &localPoints[1] - (char *) &localPoints[0];
+        // Get the constructed type lower bound and extent
+        MPI_Aint lb, extent;
+        MPI_Type_get_extent(MPI_PointType_proto, &lb, &extent);
 
-    // Create a resized type whose extent matches the actual distance
-    MPI_Type_create_resized(MPI_PointType_proto, lb, extent, &MPI_PointType);
-    MPI_Type_commit(&MPI_PointType);
+        // Get the actual distance between to vector elements
+        // (this might not be the best way to do it - if so, substitute a better one)
+        extent = (char *) &localPoints[1] - (char *) &localPoints[0];
 
-    Point gettingPoints[numberElem];
-    Point resultPoints[numberElem];
+        // Create a resized type whose extent matches the actual distance
+        MPI_Type_create_resized(MPI_PointType_proto, lb, extent, &MPI_PointType);
+        MPI_Type_commit(&MPI_PointType);
 
-    MPI_Status status;
-    for (int i = 0; i < permutation.size(); ++i) {
-        Permutation curPerm = permutation[i];
-        if (curPerm.getLeft() == rank) {
-            MPI_Send(localPoints, numberElem, MPI_PointType, curPerm.getRight(), 0, MPI_COMM_WORLD);
-            MPI_Recv(gettingPoints, numberElem, MPI_PointType, curPerm.getRight(), 0, MPI_COMM_WORLD, &status);
+        Point gettingPoints[numberElem];
+        Point resultPoints[numberElem];
 
-            for (int i = 0, j = numberElem - 1; i < numberElem; ++i, --j) {
+        MPI_Status status;
+        for (int i = 0; i < permutation.size(); ++i) {
+            Permutation curPerm = permutation[i];
+            if (curPerm.getLeft() == rank) {
+                MPI_Send(localPoints, numberElem, MPI_PointType, curPerm.getRight(), 0, MPI_COMM_WORLD);
+                MPI_Recv(gettingPoints, numberElem, MPI_PointType, curPerm.getRight(), 0, MPI_COMM_WORLD, &status);
 
-                if (localPoints[i].x > gettingPoints[j].x) {
-                    resultPoints[i] = gettingPoints[j];
-                } else {
-                    resultPoints[i] = localPoints[i];
+                for (int i = 0, j = numberElem - 1; i < numberElem; ++i, --j) {
+
+                    if (localPoints[i].x > gettingPoints[j].x) {
+                        resultPoints[i] = gettingPoints[j];
+                    } else {
+                        resultPoints[i] = localPoints[i];
+                    }
                 }
-            }
 
-        } else if (curPerm.getRight() == rank) {
-            MPI_Recv(gettingPoints, numberElem, MPI_PointType, curPerm.getLeft(), 0, MPI_COMM_WORLD, &status);
-            MPI_Send(localPoints, numberElem, MPI_PointType, curPerm.getLeft(), 0, MPI_COMM_WORLD);
+            } else if (curPerm.getRight() == rank) {
+                MPI_Recv(gettingPoints, numberElem, MPI_PointType, curPerm.getLeft(), 0, MPI_COMM_WORLD, &status);
+                MPI_Send(localPoints, numberElem, MPI_PointType, curPerm.getLeft(), 0, MPI_COMM_WORLD);
 
-            for (int i = 0, j = numberElem - 1; i < numberElem; ++i, --j) {
-                if (localPoints[j].x < gettingPoints[i].x) {
-                    resultPoints[j] = gettingPoints[i];
-                } else {
-                    resultPoints[j] = localPoints[j];
+                for (int i = 0, j = numberElem - 1; i < numberElem; ++i, --j) {
+                    if (localPoints[j].x < gettingPoints[i].x) {
+                        resultPoints[j] = gettingPoints[i];
+                    } else {
+                        resultPoints[j] = localPoints[j];
+                    }
                 }
             }
         }
+
+        MPI_Barrier(MPI_COMM_WORLD);
+        //Free up the type
+        MPI_Type_free(&MPI_PointType);
+        if(useQSort){
+        quickSort(numberElem, resultPoints);
+    } else {
+        heapSort(numberElem, resultPoints);
     }
 
-    MPI_Barrier(MPI_COMM_WORLD);
-    heapSort(numberElem, resultPoints);
-
-   /* std::cout << "After, CPU #" << rank << ":" << std::endl;
-    for (int i = 0; i < numberElem; ++i) {
-        std::cout << i << " " << resultPoints[i].x << std::endl;
-    }*/
+        std::cout << "After, CPU #" << rank << ":" << std::endl;
+        for (int i = 0; i < numberElem; ++i) {
+            std::cout << i << " " << resultPoints[i].x << std::endl;
+        };
+    } else {
+        std::cout << "After, CPU #" << rank << ":" << std::endl;
+        for (int i = 0; i < numberElem; ++i) {
+            std::cout << i << " " << localPoints[i].x << std::endl;
+        }
+    }
 
     std::cout << std::endl;
 
-    //Free up the type
-    MPI_Type_free(&MPI_PointType);
     MPI_Finalize();
 
     return 0;

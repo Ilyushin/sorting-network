@@ -32,7 +32,7 @@ set(SOURCE_FILES
         src/quickSort.cpp
         include/quickSort.h
         src/parallelMergeSort.cpp
-        include/parallelMergeSort.h)
+        include/parallelMergeSort.h src/point.cpp)
 
 add_executable(sortingNetwork ${SOURCE_FILES})
 target_link_libraries(sortingNetwork gtest)
