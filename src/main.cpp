@@ -6,14 +6,34 @@
 #include "../include/heapSort.h"
 #include "../include/parallelMergeSort.h"
 
-typedef std::vector<Point> point_vec_t;
-
-// Iterate since 0 to n1, 1 to n2 and create Points of a grid
-void fillCoord(int length, Point *points, int cpu);
+//typedef std::vector<Point> point_vec_t;
 
 // Returns a next coordinate which was calculated using a function:
 //      coord = (counter - 1)*delta
-float getNextCoordinate(int i, int j);
+float getNextCoordinate(int i, int j) {
+    return (rand() / (float) RAND_MAX * i) + j;
+}
+
+// Iterate since 0 to n1, 1 to n2 and create Points of a grid
+void fillCoord(int realLength, int length, Point *points) {
+    int i, j;
+    for (i = 0, j = 0; i < realLength; ++i, ++j) {
+        points[i] = *createPoint(
+                getNextCoordinate(i, j),
+                getNextCoordinate(i, j),
+                i
+        );
+    }
+
+    // Add dummy points
+    for (;i < length; ++i) {
+        points[i] = *createPoint(
+                -1,
+                -1,
+                -1
+        );
+    }
+}
 
 //TODO Move some piece of code to macroses or function
 int main(int argc, char *argv[]) {
@@ -56,9 +76,49 @@ int main(int argc, char *argv[]) {
     int processors;
     MPI_Comm_size(MPI_COMM_WORLD, &processors);
 
+    int realLength = length;
+    if(length % processors!= 0){
+        do {
+            ++length;
+        } while(length % processors != 0);
+    }
+
+    Point sortArray [length];
+    if(rank == 0) {
+        fillCoord(realLength, length, sortArray);
+    }
+
     int numberElem = length / processors;
     Point localPoints[numberElem];
-    fillCoord(numberElem, localPoints, rank);
+
+    // Create a new type of MPI
+    const int n = 3;
+    int blocklengths[n] = {1, 1, 1};
+    MPI_Datatype types[n] = {MPI_DOUBLE, MPI_DOUBLE, MPI_INT};
+    MPI_Datatype MPI_PointType_proto, MPI_PointType;
+    MPI_Aint offsets[n];
+
+    offsets[0] = offsetof(Point, x);
+    offsets[1] = offsetof(Point, y);
+    offsets[2] = offsetof(Point, index);
+
+    MPI_Type_create_struct(n, blocklengths, offsets, types, &MPI_PointType_proto);
+
+    // Resize the type so that its length matches the actual structure length
+
+    // Get the constructed type lower bound and extent
+    MPI_Aint lb, extent;
+    MPI_Type_get_extent(MPI_PointType_proto, &lb, &extent);
+
+    // Get the actual distance between to vector elements
+    // (this might not be the best way to do it - if so, substitute a better one)
+    extent = (char *) &localPoints[1] - (char *) &localPoints[0];
+
+    // Create a resized type whose extent matches the actual distance
+    MPI_Type_create_resized(MPI_PointType_proto, lb, extent, &MPI_PointType);
+    MPI_Type_commit(&MPI_PointType);
+
+    MPI_Scatter(sortArray, numberElem, MPI_PointType, &localPoints, numberElem, MPI_PointType, 0, MPI_COMM_WORLD);
 
     MPI_Barrier(MPI_COMM_WORLD);
     std::cout << "Before, CPU #" << rank << ":" << std::endl;
@@ -86,33 +146,6 @@ int main(int argc, char *argv[]) {
         SortingNetwork *network = new SortingNetwork(processors);
         network->buildSchedule();
         permutation_vec_t permutation = network->getPermutations();
-
-        // Create a new type of MPI
-        const int n = 3;
-        int blocklengths[n] = {1, 1, 1};
-        MPI_Datatype types[n] = {MPI_DOUBLE, MPI_DOUBLE, MPI_INT};
-        MPI_Datatype MPI_PointType_proto, MPI_PointType;
-        MPI_Aint offsets[n];
-
-        offsets[0] = offsetof(Point, x);
-        offsets[1] = offsetof(Point, y);
-        offsets[2] = offsetof(Point, index);
-
-        MPI_Type_create_struct(n, blocklengths, offsets, types, &MPI_PointType_proto);
-
-        // Resize the type so that its length matches the actual structure length
-
-        // Get the constructed type lower bound and extent
-        MPI_Aint lb, extent;
-        MPI_Type_get_extent(MPI_PointType_proto, &lb, &extent);
-
-        // Get the actual distance between to vector elements
-        // (this might not be the best way to do it - if so, substitute a better one)
-        extent = (char *) &localPoints[1] - (char *) &localPoints[0];
-
-        // Create a resized type whose extent matches the actual distance
-        MPI_Type_create_resized(MPI_PointType_proto, lb, extent, &MPI_PointType);
-        MPI_Type_commit(&MPI_PointType);
 
         Point gettingPoints[numberElem];
         Point resultPoints[numberElem];
@@ -172,20 +205,4 @@ int main(int argc, char *argv[]) {
     MPI_Finalize();
 
     return 0;
-}
-
-void fillCoord(int length, Point *points, int cpu) {
-    int indx = cpu * length;
-    for (int i = 0; i < length; ++i) {
-        points[i] = *createPoint(
-                getNextCoordinate(i, indx),
-                getNextCoordinate(i, indx),
-                indx
-        );
-        ++indx;
-    }
-}
-
-float getNextCoordinate(int i, int j) {
-    return (rand() / (float) RAND_MAX * i) + j;
 }
