@@ -83,8 +83,9 @@ int main(int argc, char *argv[]) {
         } while (length % processors != 0);
     }
 
-    Point *sortArray = new Point[length];
+    Point *sortArray;
     if (rank == 0) {
+        sortArray = new Point[length];
         fillCoord(realLength, length, sortArray);
     }
 
@@ -127,7 +128,7 @@ int main(int argc, char *argv[]) {
     MPI_Barrier(MPI_COMM_WORLD);
     if (rank == 0) {
         execTime = MPI_Wtime() - execTime;
-        std::cout << "Time of shared: " << execTime << std::endl;
+        std::cout << "Time of shared "<< length << " elements: " << execTime << std::endl;
     }
 
     if (rank == 0) {
@@ -145,7 +146,7 @@ int main(int argc, char *argv[]) {
     MPI_Barrier(MPI_COMM_WORLD);
     if (rank == 0) {
         execTime = MPI_Wtime() - execTime;
-        std::cout << "Time of sorting on a CPU: " << execTime << std::endl;
+        std::cout << "Time of sorting "<< length << " elements on a CPU: " << execTime << std::endl;
     }
 
     if (rank == 0) {
@@ -193,7 +194,7 @@ int main(int argc, char *argv[]) {
         MPI_Barrier(MPI_COMM_WORLD);
         if (rank == 0) {
             execTime = MPI_Wtime() - execTime;
-            std::cout << "Time of BatcherSorting: " << execTime << std::endl;
+            std::cout << "Time of BatcherSorting "<< length << " elements: " << execTime << std::endl;
         }
 
         if (useQSort) {
@@ -201,6 +202,9 @@ int main(int argc, char *argv[]) {
         } else {
             heapSort(numberElem, resultPoints);
         }
+
+        delete[] gettingPoints;
+        delete[] resultPoints;
 
         /*std::cout << "After, CPU #" << rank << ":" << std::endl;
         for (int i = 0; i < numberElem; ++i) {
