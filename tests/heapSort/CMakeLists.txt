@@ -12,7 +12,7 @@ include_directories(
 )
 
 set(SOURCE_FILES
-        ../../include/heapSort.h
+        ../../src/heapSort.h
         ../../src/heapSort.cpp
         testHeapSort.cpp
         )

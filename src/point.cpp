@@ -1,4 +1,4 @@
-#include "../include/point.h"
+#include "point.h"
 
 Point *createPoint(float x, float y, int index){
     Point *point = new Point;

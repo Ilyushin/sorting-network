@@ -1,10 +1,10 @@
 #include <iostream>
-#include <sortingNetwork.h>
 #include <mpi.h>
-#include "../include/point.h"
-#include "../include/quickSort.h"
-#include "../include/heapSort.h"
-#include "../include/parallelMergeSort.h"
+#include "sortingNetwork.h"
+#include "point.h"
+#include "quickSort.h"
+#include "heapSort.h"
+#include "parallelMergeSort.h"
 
 //typedef std::vector<Point> point_vec_t;
 
@@ -18,20 +18,20 @@ float getNextCoordinate(int i, int j) {
 void fillCoord(int realLength, int length, Point *points) {
     int i, j;
     for (i = 0, j = 0; i < realLength; ++i, ++j) {
-        points[i] = *createPoint(
+        points[i] = *(createPoint(
                 getNextCoordinate(i, j),
                 getNextCoordinate(i, j),
                 i
-        );
+        ));
     }
 
     // Add dummy points
     for (; i < length; ++i) {
-        points[i] = *createPoint(
+        points[i] = *(createPoint(
                 -1,
                 -1,
                 -1
-        );
+        ));
     }
 }
 
@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
         } while (length % processors != 0);
     }
 
-    Point sortArray[length];
+    Point *sortArray = new Point[length];
     if (rank == 0) {
         fillCoord(realLength, length, sortArray);
     }
@@ -110,42 +110,55 @@ int main(int argc, char *argv[]) {
     MPI_Aint lb, extent;
     MPI_Type_get_extent(MPI_PointType_proto, &lb, &extent);
 
-    // Get the actual distance between to vector elements
-    // (this might not be the best way to do it - if so, substitute a better one)
+    // Get the actual distance between to array elements
     extent = (char *) &localPoints[1] - (char *) &localPoints[0];
 
     // Create a resized type whose extent matches the actual distance
     MPI_Type_create_resized(MPI_PointType_proto, lb, extent, &MPI_PointType);
     MPI_Type_commit(&MPI_PointType);
 
+    double execTime;
+    if (rank == 0) {
+        execTime = MPI_Wtime();
+    }
+
     MPI_Scatter(sortArray, numberElem, MPI_PointType, &localPoints, numberElem, MPI_PointType, 0, MPI_COMM_WORLD);
 
     MPI_Barrier(MPI_COMM_WORLD);
-    std::cout << "Before, CPU #" << rank << ":" << std::endl;
-    for (int i = 0; i < numberElem; ++i) {
-        std::cout << i << " " << localPoints[i].x << std::endl;
+    if (rank == 0) {
+        execTime = MPI_Wtime() - execTime;
+        std::cout << "Time of shared: " << execTime << std::endl;
     }
 
-    if (numberElem <= 50000) {
-        if (useQSort) {
-            quickSort(numberElem, localPoints);
-        } else {
-            heapSort(numberElem, localPoints);
-        }
+    if (rank == 0) {
+        execTime = MPI_Wtime();
+    }
+    //if (numberElem <= 50000) {
+    if (useQSort) {
+        quickSort(numberElem, localPoints);
     } else {
+        heapSort(numberElem, localPoints);
+    }
+    /*} else {
         parallelMergeSort(numberElem, localPoints);
+    }*/
+    MPI_Barrier(MPI_COMM_WORLD);
+    if (rank == 0) {
+        execTime = MPI_Wtime() - execTime;
+        std::cout << "Time of sorting on a CPU: " << execTime << std::endl;
     }
 
-    std::cout << std::endl;
-
+    if (rank == 0) {
+        execTime = MPI_Wtime();
+    }
     if (processors > 1) {
 
         SortingNetwork *network = new SortingNetwork(processors);
         network->buildSchedule();
         permutation_vec_t permutation = network->getPermutations();
 
-        Point gettingPoints[numberElem];
-        Point resultPoints[numberElem];
+        Point *gettingPoints = new Point[numberElem];
+        Point *resultPoints = new Point[numberElem];
 
         MPI_Status status;
         for (int i = 0; i < permutation.size(); ++i) {
@@ -178,6 +191,10 @@ int main(int argc, char *argv[]) {
         }
 
         MPI_Barrier(MPI_COMM_WORLD);
+        if (rank == 0) {
+            execTime = MPI_Wtime() - execTime;
+            std::cout << "Time of BatcherSorting: " << execTime << std::endl;
+        }
 
         if (useQSort) {
             quickSort(numberElem, resultPoints);
@@ -185,23 +202,24 @@ int main(int argc, char *argv[]) {
             heapSort(numberElem, resultPoints);
         }
 
-        std::cout << "After, CPU #" << rank << ":" << std::endl;
+        /*std::cout << "After, CPU #" << rank << ":" << std::endl;
         for (int i = 0; i < numberElem; ++i) {
             std::cout << i << " " << resultPoints[i].x << std::endl;
-        }
+        }*/
 
     } else {
-        std::cout << "After, CPU #" << rank << ":" << std::endl;
+        /*std::cout << "After, CPU #" << rank << ":" << std::endl;
         for (int i = 0; i < numberElem; ++i) {
             std::cout << i << " " << localPoints[i].x << std::endl;
-        }
+        }*/
     };
 
     MPI_Barrier(MPI_COMM_WORLD);
     //Free up the type
     MPI_Type_free(&MPI_PointType);
-
+    delete[] sortArray;
     MPI_Finalize();
 
     return 0;
 }
+

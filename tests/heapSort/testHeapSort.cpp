@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "../../include/heapSort.h"
+#include "../../src/heapSort.h"
 
 TEST(HeapSort, Heapify) {
     Point arr[10];
