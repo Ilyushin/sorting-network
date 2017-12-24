@@ -17,7 +17,9 @@ typedef struct threadArgs {
     Point *arr;
 } ThreadArgs;
 
-void parallelMergeSort(int length, Point *arr, bool byY = false);
+void mergeSort(int length, Point *arr, bool byY = false);
+
+void mergeSortPar(int length, Point *arr, bool byY = false, int threads = 1);
 
 
 #endif //SORTINGNETWORK_MERGESORT_H

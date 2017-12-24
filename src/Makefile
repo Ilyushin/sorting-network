@@ -1,8 +1,8 @@
 CXX=mpixlcxx_r
-CFLAGS=-c
+CFLAGS=-qarch=450d -qtune=450 -O5 -c
 EXECUTABLE=sortingNetworkExec
 
-objects=main.o bsort.o heapSort.o parallelMergeSort.o permutation.o point.o quickSort.o sortingNetwork.o
+objects=main.o bsort.o heapSort.o mergeSort.o permutation.o point.o quickSort.o sortingNetwork.o
 
 all: $(EXECUTABLE)
 
@@ -18,8 +18,8 @@ bsort.o:
 heapSort.o:
 	$(CXX) $(CFLAGS) -o heapSort.o heapSort.cpp
 
-parallelMergeSort.o:
-	$(CXX) $(CFLAGS) -o parallelMergeSort.o parallelMergeSort.cpp
+mergeSort.o:
+	$(CXX) $(CFLAGS) -o mergeSort.o mergeSort.cpp
 
 permutation.o:
 	$(CXX) $(CFLAGS) -o permutation.o permutation.cpp

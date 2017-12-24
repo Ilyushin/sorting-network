@@ -1,10 +1,11 @@
 #include <iostream>
 #include <mpi.h>
+#include <omp.h>
 #include "sortingNetwork.h"
 #include "point.h"
 #include "quickSort.h"
 #include "heapSort.h"
-#include "parallelMergeSort.h"
+#include "mergeSort.h"
 
 //typedef std::vector<Point> point_vec_t;
 
@@ -53,7 +54,7 @@ int main(int argc, char *argv[]) {
     bool useQSort = false;
     if (argc >= 4) {
         for (int i = 3; i < argc; ++i) {
-            if (strcmp(argv[i], "-q") == 0) {
+            if (strcmp(argv[i], "q") == 0) {
                 useQSort = true;
                 break;
             }
@@ -128,25 +129,33 @@ int main(int argc, char *argv[]) {
     MPI_Barrier(MPI_COMM_WORLD);
     if (rank == 0) {
         execTime = MPI_Wtime() - execTime;
-        std::cout << "Time of shared "<< length << " elements: " << execTime << std::endl;
+        std::cout << "Time of shared " << length << " elements: " << execTime << std::endl;
     }
 
     if (rank == 0) {
         execTime = MPI_Wtime();
     }
-    //if (numberElem <= 50000) {
-    if (useQSort) {
+
+    int threads = 0;
+    #pragma omp parallel
+    {
+        threads = omp_get_num_threads();
+    }
+
+    if (useQSort){
         quickSort(numberElem, localPoints);
     } else {
-        heapSort(numberElem, localPoints);
+        if (numberElem <= 50000) {
+            heapSort(numberElem, localPoints);
+        } else {
+            mergeSortPar(numberElem, localPoints, false, threads);
+        }
     }
-    /*} else {
-        parallelMergeSort(numberElem, localPoints);
-    }*/
+
     MPI_Barrier(MPI_COMM_WORLD);
     if (rank == 0) {
         execTime = MPI_Wtime() - execTime;
-        std::cout << "Time of sorting "<< length << " elements on a CPU: " << execTime << std::endl;
+        std::cout << "Time of sorting " << length << " elements on a CPU: " << execTime << std::endl;
     }
 
     if (rank == 0) {
@@ -194,7 +203,7 @@ int main(int argc, char *argv[]) {
         MPI_Barrier(MPI_COMM_WORLD);
         if (rank == 0) {
             execTime = MPI_Wtime() - execTime;
-            std::cout << "Time of BatcherSorting "<< length << " elements: " << execTime << std::endl;
+            std::cout << "Time of BatcherSorting " << length << " elements: " << execTime << std::endl;
         }
 
         if (useQSort) {
