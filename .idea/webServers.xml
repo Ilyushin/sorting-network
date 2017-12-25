@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="95aba25a-bf18-467b-b5d0-7217d7cbb6a0" name="bluegene1" url="http://bluegene1.hpc.cs.msu.ru">
+        <fileTransfer host="bluegene1.hpc.cs.msu.ru" port="22" privateKey="$USER_HOME$/.ssh/id_rsa_without_phrase" rootFolder="/home_edu/edu-cmc-pv17/edu-cmc-pv17-528-15/sorting-network" accessType="SFTP" keyPair="true">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" />
+          </advancedOptions>
+          <option name="port" value="22" />
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
