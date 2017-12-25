@@ -1,4 +1,4 @@
-#include "../include/sortingNetwork.h"
+#include "sortingNetwork.h"
 #include <math.h>
 
 SortingNetwork::SortingNetwork(){

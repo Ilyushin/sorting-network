@@ -12,27 +12,30 @@ add_subdirectory(
 set(CMAKE_C_COMPILER /usr/local/bin/mpicc)
 set(CMAKE_CXX_COMPILER /usr/local/bin/mpic++)
 
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -Wall")
+
 include_directories(
         include
         lib/googletest/googletest/include
 )
 
 set(SOURCE_FILES
-        include/bsort.h
+        src/bsort.h
         src/bsort.cpp
-        include/permutation.h
+        src/permutation.h
         src/permutation.cpp
-        include/sortingNetwork.h
+        src/sortingNetwork.h
         src/sortingNetwork.cpp
         src/main.cpp
-        include/point.h
+        src/point.h
         src/point.cpp
         src/heapSort.cpp
-        include/heapSort.h
+        src/heapSort.h
         src/quickSort.cpp
-        include/quickSort.h
-        src/parallelMergeSort.cpp
-        include/parallelMergeSort.h src/point.cpp)
+        src/quickSort.h
+        src/mergeSort.cpp
+        src/mergeSort.h
+        src/point.cpp)
 
 add_executable(sortingNetwork ${SOURCE_FILES})
 target_link_libraries(sortingNetwork gtest)

@@ -1,4 +1,4 @@
-#include "../include/bsort.h"
+#include "bsort.h"
 
 void swap(int_vec_t &arr, int left, int right) {
     if (arr[left] > arr[right]) {

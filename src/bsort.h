@@ -4,7 +4,7 @@
 
 #ifndef SORTINGNETWORK_BSORT_H
 #define SORTINGNETWORK_BSORT_H
-#include "../include/sortingNetwork.h"
+#include "sortingNetwork.h"
 
 void sort(SortingNetwork &network);
 

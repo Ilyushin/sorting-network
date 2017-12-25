@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "sortingNetwork.h"
+#include "../../src/sortingNetwork.h"
 
 int checkArr(int_vec_t &arr) {
     int result = 1;

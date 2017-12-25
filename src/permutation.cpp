@@ -1,4 +1,4 @@
-#include "../include/permutation.h"
+#include "permutation.h"
 
 Permutation::Permutation() {
     _left = 0;
