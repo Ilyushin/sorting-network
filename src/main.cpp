@@ -132,7 +132,7 @@ int main(int argc, char *argv[]) {
     MPI_Barrier(MPI_COMM_WORLD);
     if (rank == 0) {
         execTime = MPI_Wtime() - execTime;
-        //std::cout << "Time of shared " << length << " elements: " << execTime << std::endl;
+        std::cout << "Time of shared " << length << " elements: " << execTime << std::endl;
     }
 
     if (rank == 0) {
@@ -156,14 +156,14 @@ int main(int argc, char *argv[]) {
     }
 
     MPI_Barrier(MPI_COMM_WORLD);
-    std::cout << "Before, CPU #" << rank << ":" << std::endl;
+    /*std::cout << "Before, CPU #" << rank << ":" << std::endl;
     for (int i = 0; i < numberElem; ++i) {
         std::cout << i << " " << localPoints[i].x << std::endl;
-    }
+    }*/
 
     if (rank == 0) {
         execTime = MPI_Wtime() - execTime;
-        //std::cout << "Time of sorting " << length << " elements on a CPU: " << execTime << std::endl;
+        std::cout << "Time of sorting " << length << " elements on a CPU: " << execTime << std::endl;
     }
 
     if (rank == 0) {
@@ -218,21 +218,15 @@ int main(int argc, char *argv[]) {
         MPI_Barrier(MPI_COMM_WORLD);
         if (rank == 0) {
             execTime = MPI_Wtime() - execTime;
-            //std::cout << "Time of BatcherSorting " << length << " elements: " << execTime << std::endl;
-            //std::cout << "Tackts number: " << network->getTacts() << std::endl;
-            //std::cout << "Comparators number: " << permutation.size() << std::endl;
+            std::cout << "Time of BatcherSorting " << length << " elements: " << execTime << std::endl;
+            std::cout << "Tacts number: " << network->getTacts() << std::endl;
+            std::cout << "Comparators number: " << permutation.size() << std::endl;
         }
 
-        if (useQSort) {
-            quickSort(numberElem, resultPoints);
-        } else {
-            heapSort(numberElem, resultPoints);
-        }
-
-        std::cout << "After, CPU #" << rank << ":" << std::endl;
+        /*std::cout << "After, CPU #" << rank << ":" << std::endl;
         for (int i = 0; i < numberElem; ++i) {
             std::cout << i << " " << resultPoints[i].x << std::endl;
-        }
+        }*/
 
         delete[] gettingPoints;
         delete[] resultPoints;
