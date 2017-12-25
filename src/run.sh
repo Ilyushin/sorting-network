@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+llcancel -u edu-cmc-pv17-528-15
 rm result_* sortingNetworkExec.*
 make clean
 make

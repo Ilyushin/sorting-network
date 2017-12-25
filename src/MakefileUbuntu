@@ -1,5 +1,5 @@
 CXX=mpicxx
-CFLAGS=-fopenmp -c
+CFLAGS=-Wall -std=c++98 -fopenmp -c
 EXECUTABLE=sortingNetworkExec
 
 objects=main.o bsort.o heapSort.o mergeSort.o permutation.o point.o quickSort.o sortingNetwork.o
