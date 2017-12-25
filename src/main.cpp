@@ -139,10 +139,10 @@ int main(int argc, char *argv[]) {
         execTime = MPI_Wtime();
     }
 
-    int threads = 0;
+    int threads = 2;
     #pragma omp parallel
     {
-        threads = omp_get_num_threads();
+        omp_set_num_threads(threads);
     }
 
     if (useQSort){
