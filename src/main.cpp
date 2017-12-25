@@ -1,4 +1,7 @@
 #include <iostream>
+#include <limits.h>
+#include <string.h>
+#include <stddef.h>
 #include <mpi.h>
 #include <omp.h>
 #include "sortingNetwork.h"

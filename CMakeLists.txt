@@ -12,6 +12,8 @@ add_subdirectory(
 set(CMAKE_C_COMPILER /usr/local/bin/mpicc)
 set(CMAKE_CXX_COMPILER /usr/local/bin/mpic++)
 
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -Wall")
+
 include_directories(
         include
         lib/googletest/googletest/include

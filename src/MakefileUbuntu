@@ -1,5 +1,5 @@
-CXX=mpicxx
-CFLAGS=-Wall -std=c++98 -fopenmp -c
+CXX=mpicxx.mpich
+CFLAGS=-Wall -std=c++11 -fopenmp -c
 EXECUTABLE=sortingNetworkExec
 
 objects=main.o bsort.o heapSort.o mergeSort.o permutation.o point.o quickSort.o sortingNetwork.o
@@ -7,31 +7,31 @@ objects=main.o bsort.o heapSort.o mergeSort.o permutation.o point.o quickSort.o 
 all: $(EXECUTABLE)
 
 sortingNetworkExec: $(objects)
-	$(CXX) -o $(EXECUTABLE) $(objects)
+        $(CXX) -Wall -std=c++11 -fopenmp -o $(EXECUTABLE) $(objects)
 
 main.o: 
-	$(CXX) $(CFLAGS) main.cpp
+        $(CXX) $(CFLAGS) main.cpp
 
 bsort.o:
-	$(CXX) $(CFLAGS) -o bsort.o bsort.cpp
+        $(CXX) $(CFLAGS) -o bsort.o bsort.cpp
 
 heapSort.o:
-	$(CXX) $(CFLAGS) -o heapSort.o heapSort.cpp
+        $(CXX) $(CFLAGS) -o heapSort.o heapSort.cpp
 
 mergeSort.o:
-	$(CXX) $(CFLAGS) -o mergeSort.o mergeSort.cpp
+        $(CXX) $(CFLAGS) -o mergeSort.o mergeSort.cpp
 
 permutation.o:
-	$(CXX) $(CFLAGS) -o permutation.o permutation.cpp
+        $(CXX) $(CFLAGS) -o permutation.o permutation.cpp
 
 point.o:
-	$(CXX) $(CFLAGS) -o point.o point.cpp
+        $(CXX) $(CFLAGS) -o point.o point.cpp
 
 quickSort.o:
-	$(CXX) $(CFLAGS) -o quickSort.o quickSort.cpp
+        $(CXX) $(CFLAGS) -o quickSort.o quickSort.cpp
 
 sortingNetwork.o:
-	$(CXX) $(CFLAGS) -o sortingNetwork.o sortingNetwork.cpp
+        $(CXX) $(CFLAGS) -o sortingNetwork.o sortingNetwork.cpp
 
 clean:
-	rm $(objects) $(EXECUTABLE)
+        rm $(objects) $(EXECUTABLE)
