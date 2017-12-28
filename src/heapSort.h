@@ -4,8 +4,8 @@
 #include "./point.h"
 
 // TODO Public only for testing
-void heapify(int size, Point arr[], int i, bool byY);
+void heapify(int size, Point arr[], int i, int axis = 0);
 
-void heapSort(int size, Point arr[], bool byY = false);
+void heapSort(int size, Point arr[], int axis = 0);
 
 #endif //SORTINGNETWORK_HSORT_H

@@ -54,6 +54,11 @@ void SortingNetwork::buildSchedule(){
 
                     Permutation newPerm = *new Permutation(left, right);
                     currentComp.push_back(newPerm);
+
+
+                    /*if (arr.size() > 0) {
+                        swap(arr, left, right);
+                    }*/
                 }
             }
 

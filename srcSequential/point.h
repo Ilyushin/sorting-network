@@ -1,7 +1,3 @@
-//
-// Created by Evgeny Ilyushin on 11/30/17.
-//
-
 #ifndef SORTINGNETWORK_POINT_H
 #define SORTINGNETWORK_POINT_H
 
