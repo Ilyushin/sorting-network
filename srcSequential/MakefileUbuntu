@@ -1,0 +1,22 @@
+CXX=mpicxx.mpich
+CFLAGS=-Wall -std=c++11 -fopenmp -c
+EXECUTABLE=sortingNetworkExec
+
+objects=main.o point.o quickSort.o
+
+all: $(EXECUTABLE)
+
+sortingNetworkExec: $(objects)
+	$(CXX) -Wall -std=c++11 -fopenmp -o $(EXECUTABLE) $(objects)
+
+main.o: 
+	$(CXX) $(CFLAGS) main.cpp
+
+point.o:
+	$(CXX) $(CFLAGS) -o point.o point.cpp
+
+quickSort.o:
+	$(CXX) $(CFLAGS) -o quickSort.o quickSort.cpp
+
+clean:
+	rm $(objects) $(EXECUTABLE)

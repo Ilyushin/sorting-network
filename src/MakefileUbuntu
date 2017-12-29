@@ -2,7 +2,7 @@ CXX=mpicxx.mpich
 CFLAGS=-Wall -std=c++11 -fopenmp -c
 EXECUTABLE=sortingNetworkExec
 
-objects=main.o bsort.o heapSort.o mergeSort.o permutation.o point.o quickSort.o sortingNetwork.o
+objects=main.o bsort.o heapSort.o dhSort.o permutation.o point.o quickSort.o sortingNetwork.o
 
 all: $(EXECUTABLE)
 
@@ -18,8 +18,8 @@ bsort.o:
 heapSort.o:
 	$(CXX) $(CFLAGS) -o heapSort.o heapSort.cpp
 
-mergeSort.o:
-	$(CXX) $(CFLAGS) -o mergeSort.o mergeSort.cpp
+dhSort.o:
+	$(CXX) $(CFLAGS) -o dhSort.o dhSort.cpp
 
 permutation.o:
 	$(CXX) $(CFLAGS) -o permutation.o permutation.cpp

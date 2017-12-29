@@ -1,50 +1,37 @@
 #include "heapSort.h"
 
 // TODO Public only for testing
-void heapify(int size, Point arr[], int i, bool byY) {
+void heapify(int size, Point arr[], int i, int axis) {
     int left = 2 * i + 1;
     int right = 2 * i + 2;
     int largest = i;
 
-    if(byY == false) {
+    if (left <= size - 1 && arr[left].coord[axis] > arr[largest].coord[axis]) {
+        largest = left;
+    };
 
-        if (left <= size - 1 && arr[left].x > arr[largest].x) {
-            largest = left;
-        };
-
-        if (right <= size - 1 && arr[right].x > arr[largest].x) {
-            largest = right;
-        };
-
-    } else {
-
-        if (left <= size - 1 && arr[left].y > arr[largest].y) {
-            largest = left;
-        };
-
-        if (right <= size - 1 && arr[right].y > arr[largest].y) {
-            largest = right;
-        };
-    }
+    if (right <= size - 1 && arr[right].coord[axis] > arr[largest].coord[axis]) {
+        largest = right;
+    };
 
     if (largest != i) {
         Point temp = arr[i];
         arr[i] = arr[largest];
         arr[largest] = temp;
-        heapify(size, arr, largest, byY);
+        heapify(size, arr, largest, axis);
     }
 }
 
-void heapSort(int size, Point arr[], bool byY) {
+void heapSort(int size, Point arr[], int axis) {
 
     // Build heap
     for (int i = (size / 2) - 1; i >= 0; --i) {
-        heapify(size, arr, i, byY);
+        heapify(size, arr, i, axis);
     };
 
     // sort
     int length = size;
-    for (int i = length-1; i > 0; --i) {
+    for (int i = length - 1; i > 0; --i) {
         Point temp = arr[0];
         arr[0] = arr[i];
         arr[i] = temp;

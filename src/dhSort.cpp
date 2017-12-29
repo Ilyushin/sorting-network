@@ -1,12 +1,12 @@
-#include "mergeSort.h"
+#include "dhSort.h"
 
-void merge(Point *arr1, int length1, Point *arr2, int length2) {
+void merge(Point *arr1, int length1, Point *arr2, int length2, int axis) {
     int pos1 = 0, pos2 = 0, pos3 = 0;
 
     Point *temp = new Point[length1 + length2];
 
     while (pos1 < length1 && pos2 < length2) {
-        if (arr1[pos1].x < arr2[pos2].x) {
+        if (arr1[pos1].coord[axis] < arr2[pos2].coord[axis]) {
             temp[pos3++] = arr1[pos1++];
         } else {
             temp[pos3++] = arr2[pos2++];
@@ -31,13 +31,13 @@ void merge(Point *arr1, int length1, Point *arr2, int length2) {
     delete[] temp;
 }
 
-void mergeSort(int length, Point *arr, bool byY) {
+void dhSort(int length, Point *arr, int axis) {
     if (length == 1) {
         return;
     };
 
     if (length == 2) {
-        if (arr[0].x > arr[1].x) {
+        if (arr[0].coord[axis] > arr[1].coord[axis]) {
             Point tmp = arr[0];
             arr[0] = arr[1];
             arr[1] = tmp;
@@ -46,19 +46,19 @@ void mergeSort(int length, Point *arr, bool byY) {
     }
 
     if (length > 1) {
-        mergeSort(length / 2, arr);
-        mergeSort(length - length / 2, arr + length / 2);
-        merge(arr, length / 2, arr + length / 2, length - length / 2);
+        dhSort(length / 2, arr, axis);
+        dhSort(length - length / 2, arr + length / 2, axis);
+        merge(arr, length / 2, arr + length / 2, length - length / 2, axis);
     }
 }
 
-void mergeSortPar(int length, Point *arr, bool byY, int threads) {
+void dhSortPar(int length, Point *arr, int axis, int threads) {
     if (length == 1) {
         return;
     };
 
     if (length == 2) {
-        if (arr[0].x > arr[1].x) {
+        if (arr[0].coord[axis] > arr[1].coord[axis]) {
             Point tmp = arr[0];
             arr[0] = arr[1];
             arr[1] = tmp;
@@ -70,10 +70,10 @@ void mergeSortPar(int length, Point *arr, bool byY, int threads) {
         #pragma omp parallel sections
         {
             #pragma omp section
-            mergeSortPar(length / 2, arr, byY, threads / 2);
+            dhSortPar(length / 2, arr, axis, threads / 2);
             #pragma omp section
-            mergeSortPar(length - length / 2, arr + length / 2, byY, threads - threads / 2);
+            dhSortPar(length - length / 2, arr + length / 2, axis, threads - threads / 2);
         };
-        merge(arr, length / 2, arr + length / 2, length - length / 2);
+        merge(arr, length / 2, arr + length / 2, length - length / 2, axis);
     }
 }

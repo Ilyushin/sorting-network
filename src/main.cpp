@@ -8,7 +8,7 @@
 #include "point.h"
 #include "quickSort.h"
 #include "heapSort.h"
-#include "mergeSort.h"
+#include "dhSort.h"
 
 //typedef std::vector<Point> point_vec_t;
 
@@ -42,9 +42,9 @@ void fillCoord(int realLength, int length, Point *points) {
 //TODO Move some piece of code to macroses or function
 int main(int argc, char *argv[]) {
 
-    //if(rank == 0) {
     int n1 = 0;
     int n2 = 0;
+    int k = 0; // Number of domains
 
     if (argc >= 3) {
         n1 = atoi(argv[1]);
@@ -55,10 +55,18 @@ int main(int argc, char *argv[]) {
     }
 
     bool useQSort = false;
-    if (argc >= 4) {
+    bool useHeap = false;
+    bool usePar = false;
+    if (argc >= 3) {
         for (int i = 3; i < argc; ++i) {
             if (strcmp(argv[i], "q") == 0) {
                 useQSort = true;
+                break;
+            } else if (strcmp(argv[i], "h") == 0) {
+                useHeap = true;
+                break;
+            } else if (strcmp(argv[i], "p") == 0) {
+                usePar = true;
                 break;
             }
         }
@@ -97,15 +105,14 @@ int main(int argc, char *argv[]) {
     Point *localPoints = new Point[numberElem];
 
     // Create a new type of MPI
-    const int n = 3;
-    int blocklengths[n] = {1, 1, 1};
-    MPI_Datatype types[n] = {MPI_DOUBLE, MPI_DOUBLE, MPI_INT};
+    const int n = 2;
+    int blocklengths[n] = {2, 1};
+    MPI_Datatype types[n] = {MPI_FLOAT, MPI_INT};
     MPI_Datatype MPI_PointType_proto, MPI_PointType;
     MPI_Aint offsets[n];
 
-    offsets[0] = offsetof(Point, x);
-    offsets[1] = offsetof(Point, y);
-    offsets[2] = offsetof(Point, index);
+    offsets[0] = offsetof(Point, coord);
+    offsets[1] = offsetof(Point, index);
 
     MPI_Type_create_struct(n, blocklengths, offsets, types, &MPI_PointType_proto);
 
@@ -122,53 +129,39 @@ int main(int argc, char *argv[]) {
     MPI_Type_create_resized(MPI_PointType_proto, lb, extent, &MPI_PointType);
     MPI_Type_commit(&MPI_PointType);
 
-    double execTime;
-    if (rank == 0) {
-        execTime = MPI_Wtime();
-    }
+    double sharedTime = MPI_Wtime();
 
     MPI_Scatter(sortArray, numberElem, MPI_PointType, localPoints, numberElem, MPI_PointType, 0, MPI_COMM_WORLD);
 
-    MPI_Barrier(MPI_COMM_WORLD);
-    if (rank == 0) {
-        execTime = MPI_Wtime() - execTime;
-        std::cout << "Time of shared " << length << " elements: " << execTime << std::endl;
-    }
+    sharedTime = MPI_Wtime() - sharedTime;
 
-    if (rank == 0) {
-        execTime = MPI_Wtime();
-    }
 
-    int threads = 2;
+    double sortingTime = MPI_Wtime();
+
+    int threads = 0;
     #pragma omp parallel
     {
-        omp_set_num_threads(threads);
+        threads = omp_get_num_threads();
     }
 
-    if (useQSort){
+
+    if (useQSort) {
         quickSort(numberElem, localPoints);
+    } else if (useHeap) {
+        heapSort(numberElem, localPoints);
+    } else if (usePar) {
+        dhSortPar(numberElem, localPoints, 0, threads);
     } else {
         if (numberElem <= 50000) {
             heapSort(numberElem, localPoints);
         } else {
-            mergeSortPar(numberElem, localPoints, false, threads);
+            dhSortPar(numberElem, localPoints, false, threads);
         }
     }
 
-    MPI_Barrier(MPI_COMM_WORLD);
-    /*std::cout << "Before, CPU #" << rank << ":" << std::endl;
-    for (int i = 0; i < numberElem; ++i) {
-        std::cout << i << " " << localPoints[i].x << std::endl;
-    }*/
+    sortingTime = MPI_Wtime() - sortingTime;
 
-    if (rank == 0) {
-        execTime = MPI_Wtime() - execTime;
-        std::cout << "Time of sorting " << length << " elements on a CPU: " << execTime << std::endl;
-    }
-
-    if (rank == 0) {
-        execTime = MPI_Wtime();
-    }
+    int axis = 0;
     if (processors > 1) {
 
         SortingNetwork *network = new SortingNetwork(processors);
@@ -178,17 +171,18 @@ int main(int argc, char *argv[]) {
         Point *gettingPoints = new Point[numberElem];
         Point *resultPoints = new Point[numberElem];
 
+        double batcherTime = MPI_Wtime();
         MPI_Status status;
         for (int i = 0; i < permutation.size(); ++i) {
-            Permutation curPerm = permutation[i];
-            if (curPerm.getLeft() == rank) {
-                MPI_Send(localPoints, numberElem, MPI_PointType, curPerm.getRight(), 0, MPI_COMM_WORLD);
-                MPI_Recv(gettingPoints, numberElem, MPI_PointType, curPerm.getRight(), 0, MPI_COMM_WORLD, &status);
+            //Permutation curPerm = permutation[i];
+            if (permutation[i].getLeft() == rank) {
+                MPI_Send(localPoints, numberElem, MPI_PointType, permutation[i].getRight(), 0, MPI_COMM_WORLD);
+                MPI_Recv(gettingPoints, numberElem, MPI_PointType, permutation[i].getRight(), 0, MPI_COMM_WORLD, &status);
 
                 int locIndx = 0;
                 int getIndx = 0;
                 for (int i = 0; i < numberElem; ++i) {
-                    if (localPoints[locIndx].x > gettingPoints[getIndx].x) {
+                    if (localPoints[locIndx].coord[axis] > gettingPoints[getIndx].coord[axis]) {
                         resultPoints[i] = gettingPoints[getIndx];
                         ++getIndx;
                     } else {
@@ -197,14 +191,14 @@ int main(int argc, char *argv[]) {
                     }
                 }
 
-            } else if (curPerm.getRight() == rank) {
-                MPI_Recv(gettingPoints, numberElem, MPI_PointType, curPerm.getLeft(), 0, MPI_COMM_WORLD, &status);
-                MPI_Send(localPoints, numberElem, MPI_PointType, curPerm.getLeft(), 0, MPI_COMM_WORLD);
+            } else if (permutation[i].getRight() == rank) {
+                MPI_Recv(gettingPoints, numberElem, MPI_PointType, permutation[i].getLeft(), 0, MPI_COMM_WORLD, &status);
+                MPI_Send(localPoints, numberElem, MPI_PointType, permutation[i].getLeft(), 0, MPI_COMM_WORLD);
 
                 int locIndx = numberElem - 1;
                 int getIndx = numberElem - 1;
                 for (int i = numberElem - 1; i >= 0; --i) {
-                    if (localPoints[locIndx].x < gettingPoints[getIndx].x) {
+                    if (localPoints[locIndx].coord[axis] < gettingPoints[getIndx].coord[axis]) {
                         resultPoints[i] = gettingPoints[getIndx];
                         --getIndx;
                     } else {
@@ -214,30 +208,27 @@ int main(int argc, char *argv[]) {
                 }
             }
         }
+        batcherTime = MPI_Wtime() - batcherTime;
 
-        MPI_Barrier(MPI_COMM_WORLD);
+        double maxSharedTime, maxSortingTime, maxBatcherTime;
+        MPI_Reduce(&sharedTime, &maxSharedTime, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+        MPI_Reduce(&sortingTime, &maxSortingTime, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+        MPI_Reduce(&batcherTime, &maxBatcherTime, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
         if (rank == 0) {
-            execTime = MPI_Wtime() - execTime;
-            std::cout << "Time of BatcherSorting " << length << " elements: " << execTime << std::endl;
+            std::cout << "Time of shared " << length << " elements: " << maxSharedTime << std::endl;
+            std::cout << "Time of sorting " << length << " elements on a CPU: " << maxSortingTime << std::endl;
+            std::cout << "Time of BatcherSorting " << length << " elements: " << maxBatcherTime << std::endl;
+            std::cout << "Time without the shared time  " << length << " elements: " << maxSortingTime + maxBatcherTime
+                      << std::endl;
+            std::cout << "Full time " << length << " elements: " << maxSharedTime + maxSortingTime + maxBatcherTime
+                      << std::endl;
             std::cout << "Tacts number: " << network->getTacts() << std::endl;
             std::cout << "Comparators number: " << permutation.size() << std::endl;
         }
 
-        /*std::cout << "After, CPU #" << rank << ":" << std::endl;
-        for (int i = 0; i < numberElem; ++i) {
-            std::cout << i << " " << resultPoints[i].x << std::endl;
-        }*/
-
+        delete network;
         delete[] gettingPoints;
         delete[] resultPoints;
-    } else {
-
-        /*std::cout << "After, CPU #" << rank << ":" << std::endl;
-        for (int i = 0; i < numberElem; ++i) {
-            std::cout << i << " " << localPoints[i].x << std::endl;
-        }*/
-
-
     };
 
     MPI_Barrier(MPI_COMM_WORLD);
