@@ -10,6 +10,13 @@ struct Point {
     int index;
 };
 
+struct PointDomain{
+    int i;
+    int j;
+    float coord[2];
+    int domain;
+};
+
 // TODO Need to write a test
 Point *createPoint(float x, float y, int index);
 
