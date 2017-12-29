@@ -4,11 +4,11 @@
 #include <string.h>
 #include <stddef.h>
 #include <mpi.h>
-#include <omp.h>
 #include "sortingNetwork.h"
 #include "point.h"
 #include "heapSort.h"
 #include "dhSort.h"
+#include "decompose.h"
 
 MPI_Datatype MPI_PointType;
 MPI_Datatype MPI_PointDomainType;
@@ -136,7 +136,13 @@ int main(int argc, char *argv[]) {
     MPI_Scatter(sortArray, numberElem, MPI_PointType, localPoints, numberElem, MPI_PointType, 0, MPI_COMM_WORLD);
     sharedTime = MPI_Wtime() - sharedTime;
 
-   
+    int *domains = new int[length];
+    if(processors == 1) {
+        decompose(sortArray, 0, length, domains, 0, k);
+        for(int i = 0; i < length; ++i){
+            std::cout << i << "   " << domains[i] << std::endl;
+        }
+    }
 
 
     //Free up the type

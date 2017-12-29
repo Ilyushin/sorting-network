@@ -3,14 +3,13 @@
 
 /**
 * Add a new node to the list of nodes
-*
-* @return: None
 * @arr — a sorting network.
+* @arrayStartIndx — начальный элемент в массиве.
+* @length — число элементов в массиве.
 * @domains — выходной массив, в котором хранятся номера доменов для узлов сетки (имеет такую же длину что и массив a).
 * @domainStartIndx — начальный индекс доступных номеров доменов.
 * @k — number of elements
-* @arrayStartIndx — начальный элемент в массиве.
-* @length — число элементов в массиве.
+* @return: None
 */
 void decompose(Point *arr, int arrayStartIndx, int length, int *domains, int domainStartIndx, int k) {
     if (k == 1) {
@@ -27,6 +26,6 @@ void decompose(Point *arr, int arrayStartIndx, int length, int *domains, int dom
     int length1 = length * (k1 / (double)k);
     int length2 = length - length1;
 
-    decompose(arr, domainStartIndx, length1, domains, domainStartIndx, k1);
-    decompose(arr, domainStartIndx + length1, length2, domains, domainStartIndx + k1, k2);
+    decompose(arr, arrayStartIndx, length1, domains, domainStartIndx, k1);
+    decompose(arr, arrayStartIndx + length1, length2, domains, domainStartIndx + k1, k2);
 }

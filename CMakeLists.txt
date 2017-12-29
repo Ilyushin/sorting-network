@@ -12,7 +12,7 @@ add_subdirectory(
 set(CMAKE_C_COMPILER /usr/local/bin/mpicc)
 set(CMAKE_CXX_COMPILER /usr/local/bin/mpic++)
 
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -Wall")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 
 include_directories(
         include
@@ -20,8 +20,6 @@ include_directories(
 )
 
 set(SOURCE_FILES
-        src/bsort.h
-        src/bsort.cpp
         src/permutation.h
         src/permutation.cpp
         src/sortingNetwork.h
