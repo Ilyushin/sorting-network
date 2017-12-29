@@ -2,7 +2,7 @@ CXX=mpixlcxx_r
 CFLAGS=-qarch=450d -qtune=450 -O5 -c
 EXECUTABLE=sortingNetworkExec
 
-objects=main.o point.o quickSort.o
+objects=main.o point.o quickSort.o dhSort.o
 
 all: $(EXECUTABLE)
 
@@ -17,6 +17,9 @@ point.o:
 
 quickSort.o:
 	$(CXX) $(CFLAGS) -o quickSort.o quickSort.cpp
+
+dhSort.o:
+        $(CXX) $(CFLAGS) -o dhSort.o dhSort.cpp
 
 clean:
 	rm $(objects) $(EXECUTABLE)

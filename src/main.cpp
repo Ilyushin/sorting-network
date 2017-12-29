@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
     // Create a new type of MPI
     const int n = 2;
     int blocklengths[n] = {2, 1};
-    MPI_Datatype types[n] = {MPI_DOUBLE, MPI_INT};
+    MPI_Datatype types[n] = {MPI_FLOAT, MPI_INT};
     MPI_Datatype MPI_PointType_proto, MPI_PointType;
     MPI_Aint offsets[n];
 
@@ -133,7 +133,6 @@ int main(int argc, char *argv[]) {
 
     MPI_Scatter(sortArray, numberElem, MPI_PointType, localPoints, numberElem, MPI_PointType, 0, MPI_COMM_WORLD);
 
-    MPI_Barrier(MPI_COMM_WORLD);
     sharedTime = MPI_Wtime() - sharedTime;
 
 
@@ -160,7 +159,6 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    MPI_Barrier(MPI_COMM_WORLD);
     sortingTime = MPI_Wtime() - sortingTime;
 
     int axis = 0;
@@ -176,10 +174,10 @@ int main(int argc, char *argv[]) {
         double batcherTime = MPI_Wtime();
         MPI_Status status;
         for (int i = 0; i < permutation.size(); ++i) {
-            Permutation curPerm = permutation[i];
-            if (curPerm.getLeft() == rank) {
-                MPI_Send(localPoints, numberElem, MPI_PointType, curPerm.getRight(), 0, MPI_COMM_WORLD);
-                MPI_Recv(gettingPoints, numberElem, MPI_PointType, curPerm.getRight(), 0, MPI_COMM_WORLD, &status);
+            //Permutation curPerm = permutation[i];
+            if (permutation[i].getLeft() == rank) {
+                MPI_Send(localPoints, numberElem, MPI_PointType, permutation[i].getRight(), 0, MPI_COMM_WORLD);
+                MPI_Recv(gettingPoints, numberElem, MPI_PointType, permutation[i].getRight(), 0, MPI_COMM_WORLD, &status);
 
                 int locIndx = 0;
                 int getIndx = 0;
@@ -193,9 +191,9 @@ int main(int argc, char *argv[]) {
                     }
                 }
 
-            } else if (curPerm.getRight() == rank) {
-                MPI_Recv(gettingPoints, numberElem, MPI_PointType, curPerm.getLeft(), 0, MPI_COMM_WORLD, &status);
-                MPI_Send(localPoints, numberElem, MPI_PointType, curPerm.getLeft(), 0, MPI_COMM_WORLD);
+            } else if (permutation[i].getRight() == rank) {
+                MPI_Recv(gettingPoints, numberElem, MPI_PointType, permutation[i].getLeft(), 0, MPI_COMM_WORLD, &status);
+                MPI_Send(localPoints, numberElem, MPI_PointType, permutation[i].getLeft(), 0, MPI_COMM_WORLD);
 
                 int locIndx = numberElem - 1;
                 int getIndx = numberElem - 1;

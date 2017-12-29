@@ -3,9 +3,9 @@
 #include <string.h>
 #include <stddef.h>
 #include <mpi.h>
-#include <omp.h>
 #include "point.h"
 #include "quickSort.h"
+#include "dhSort.h"
 
 // Returns a next coordinate which was calculated using a function:
 //      coord = (counter - 1)*delta
@@ -64,7 +64,8 @@ int main(int argc, char *argv[]) {
         double execTime;
         execTime = MPI_Wtime();
 
-        quickSort(length, sortArray);
+        dhSort(length, sortArray, 0);
+        //quickSort(length, sortArray);
 
         execTime = MPI_Wtime() - execTime;
         std::cout << "Time of sorting " << length << " elements on a CPU: " << execTime << std::endl;
