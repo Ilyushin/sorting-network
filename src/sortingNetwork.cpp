@@ -84,7 +84,7 @@ bool SortingNetwork::_checkPar(permutation_vec_t &currentComp, int left, int rig
 }
 
 void SortingNetwork::sortBySchedule(Point **localPoints, int numberElemOnCPU, MPI_Datatype *MPI_PointType,
-                                    MPI_Comm communicator, int processors, int axis) {
+                                    MPI_Comm communicator, int axis) {
     int rank;
     MPI_Comm_rank(communicator, &rank);
 

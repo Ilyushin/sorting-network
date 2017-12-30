@@ -28,6 +28,6 @@ public:
 
     void buildSchedule();
     void sortBySchedule(Point **localPoints, int numberElemOnCPU, MPI_Datatype *MPI_PointType,
-                        MPI_Comm communicator, int processors, int axis);
+                        MPI_Comm communicator, int axis);
 };
 #endif //SORTINGNETWORK_SORTINGNETWORK_H

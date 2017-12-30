@@ -1,4 +1,5 @@
 #include <iostream>
+#include <math.h>
 #include <limits.h>
 #include <float.h>
 #include <string.h>
@@ -8,10 +9,10 @@
 #include "point.h"
 #include "heapSort.h"
 #include "dhSort.h"
-#include "decompose.h"
 
 MPI_Datatype MPI_PointType;
 MPI_Datatype MPI_PointDomainType;
+int axis = 1;
 
 void createMPI_PointDomainType() {
     const int n = 4;
@@ -105,6 +106,163 @@ int countEdges(int *domains, Point *points, int size, int n2) {
     return edges;
 }
 
+void decompose(Point *arr, int arrayStartIndx, int length, int *domains, int domainStartIndx, int k) {
+    if (k == 1) {
+        for (int i = 0; i < length; i++)
+            domains[arrayStartIndx + i] = domainStartIndx;
+        return;
+    }
+
+    axis = !axis;
+    heapSort(length, arr + arrayStartIndx, axis);
+
+    int k1 = (k + 1) / 2;
+    int k2 = k - k1;
+    int length1 = length * (k1 / (double)k);
+    int length2 = length - length1;
+
+    decompose(arr, arrayStartIndx, length1, domains, domainStartIndx, k1);
+    decompose(arr, arrayStartIndx + length1, length2, domains, domainStartIndx + k1, k2);
+}
+
+int deleteDummyElements(Point **arr, int length){
+    Point *res = new Point[length];
+    int j = 0;
+    for(int i = 0; i < length; i++){
+        if((*arr)[i].index == -1)
+            continue;
+        res[j++] = (*arr)[i];
+    }
+    //delete[] *arr;TODO need resolve a free memory bug
+    *arr = res;
+    return j;
+}
+
+Point* align(Point *array, int size, int procNumber)
+{
+    int epp = ceil(size / (double)procNumber);
+    Point *res = new Point[epp * procNumber];
+    int k = 0;
+    for(int i = 0; i < size; i++, k++){
+        res[k] = array[i];
+        array[i].index = -1;
+        array[i].coord[0] = FLT_MAX;
+        array[i].coord[1] = FLT_MAX;
+    }
+    for(; k < epp * procNumber; k++){
+        res[k].index = -1;
+        res[k].coord[0] = FLT_MAX;
+        res[k].coord[1] = FLT_MAX;
+    }
+    return res;
+}
+
+void decomposePar(Point **arr, int length, int **domains, int domainStartIndx,
+                  int k, int *numberElemOnCPU, MPI_Comm communicator, MPI_Datatype *MPI_PointType){
+
+    int rank, processors, realLength;
+    MPI_Comm_rank(communicator, &rank);
+    MPI_Comm_size(communicator, &processors);
+
+    if(processors == 1){
+        realLength = deleteDummyElements(arr, length);
+        *domains = new int[realLength];
+        decompose(*arr, 0, realLength, *domains, domainStartIndx, k);
+        *numberElemOnCPU = realLength;
+        return;
+    }
+
+    if(k == 1){
+        realLength = deleteDummyElements(arr, *numberElemOnCPU);
+        *domains = new int[realLength];
+        for(int i = 0; i < realLength; i++)
+            (*domains)[i] = domainStartIndx;
+        *numberElemOnCPU = realLength;
+        return;
+    }
+
+    MPI_Status status;
+    int k1 = (k + 1) / 2;
+    int k2 = k - k1;
+    int length1 = length * (k1 / (double)k);
+    int length2 = length - length1;
+
+    int leftCPUs = length1 / (*numberElemOnCPU);
+    int rightCPUs = processors - leftCPUs;
+    int middle = length1 % (*numberElemOnCPU);
+
+    int color;
+    if(leftCPUs == 0) {
+        color = rank > leftCPUs ? 0 : 1;
+    } else {
+        color = rank >= leftCPUs ? 0 : 1;
+    }
+
+    axis = !axis;
+    SortingNetwork *network = new SortingNetwork(processors);
+    network->buildSchedule();
+    network->sortBySchedule(arr, length, MPI_PointType, communicator, axis);
+    //delete network;
+
+    MPI_Comm new_comm;
+    MPI_Comm_split(communicator, color, rank, &new_comm);
+
+    if(leftCPUs == 0){
+        int sendElemNumber = ceil(((*numberElemOnCPU) - middle) / (double)(rightCPUs));
+        if(rank == leftCPUs){
+            Point *temp = align((*arr) + middle,
+                                (*numberElemOnCPU) - middle,
+                                rightCPUs - 1
+            );
+
+            for(int i = leftCPUs + 1, j = 0; i < processors; ++i, ++j)
+                MPI_Send(temp + j*sendElemNumber, sendElemNumber, *MPI_PointType, i, 0, communicator);
+            //delete[] temp; TODO need resolve a free memory bug
+            decomposePar(arr, length1, domains, domainStartIndx, k1,
+                         numberElemOnCPU, new_comm, MPI_PointType);
+        }else{
+            Point *arrNew = new Point[*numberElemOnCPU + sendElemNumber];
+            MPI_Recv(arrNew + (*numberElemOnCPU), sendElemNumber, *MPI_PointType, leftCPUs, 0,
+                     communicator, &status);
+            memcpy(arrNew, *arr, (*numberElemOnCPU) * sizeof(Point));
+            *numberElemOnCPU += sendElemNumber;
+            //delete[] *arr;
+            *arr = arrNew;
+            decomposePar(arr, length2, domains, domainStartIndx+k1, k2,
+                         numberElemOnCPU, new_comm, MPI_PointType);
+        }
+        return;
+    }
+
+
+    if(rank <= leftCPUs){
+        int sendElemNumber = ceil(middle / (double)leftCPUs);
+        if(rank == leftCPUs){
+            Point *temp = align(*arr, middle, leftCPUs);
+            for(int i = 0; i < leftCPUs; i++)
+                MPI_Send(temp + i*sendElemNumber, sendElemNumber, *MPI_PointType, i, 0, communicator);
+            delete [] temp;
+        }else{
+            Point *arrNew = new Point[*numberElemOnCPU + sendElemNumber];
+            MPI_Recv(arrNew + (*numberElemOnCPU), sendElemNumber, *MPI_PointType, leftCPUs, 0,
+                     communicator, &status);
+            memcpy(arrNew, *arr, (*numberElemOnCPU) * sizeof(Point));
+            *numberElemOnCPU += sendElemNumber;
+            delete [] (*arr);
+            *arr = arrNew;
+        }
+    }
+    if(rank < leftCPUs){
+        decomposePar(arr, length1, domains, domainStartIndx, k1,
+                     numberElemOnCPU, new_comm, MPI_PointType);
+    }else{
+        decomposePar(arr, length2, domains, domainStartIndx+k1, k2,
+                     numberElemOnCPU, new_comm, MPI_PointType);
+    }
+
+
+}
+
 int main(int argc, char *argv[]) {
 
     int n1 = 0;
@@ -187,45 +345,45 @@ int main(int argc, char *argv[]) {
     int axis = 1;
     int *domains = new int[length];
     if(processors == 1) {
-        decompose(sortArray, 0, length, domains, 0, k, &axis);
+        decompose(sortArray, 0, length, domains, 0, k);
         /*for(int i = 0; i < length; ++i){
             std::cout << i << "   " << domains[i] << std::endl;
         }*/
     } else {
-        decomposePar(&localPoints, numberElemOnCPU, &domains, 0, k, &numberElemOnCPU,
-                     &MPI_PointType, MPI_COMM_WORLD, &axis);
+        decomposePar(&localPoints, numberElemOnCPU, &domains, 0, k, &numberElemOnCPU, MPI_COMM_WORLD, &MPI_PointType);
     }
-//    decomposeTime = MPI_Wtime() - decomposeTime;
-//    double maxDecomposeTime = 0.0;
-//    MPI_Reduce(&decomposeTime, &maxDecomposeTime, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-//
-//    int localEdges = countEdges(domains, localPoints, numberElemOnCPU, n2);
-//    int totalEdges = 0;
-//    MPI_Reduce(&localEdges, &totalEdges, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+    decomposeTime = MPI_Wtime() - decomposeTime;
+    double maxDecomposeTime = 0.0;
+    MPI_Reduce(&decomposeTime, &maxDecomposeTime, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 
-//    if (rank == 0) {
-//        std::cout << "Size (elements): " << length << std::endl;
-//        std::cout << "Processors: " << processors << std::endl;
-//        std::cout << "Decompose time (sec): " << maxDecomposeTime << std::endl;
-//        std::cout << "Cutted edges: " << n1 * (n2 - 1) + n2 * (n1 - 1) - totalEdges << std::endl;
-//    }
+    int localEdges = countEdges(domains, localPoints, numberElemOnCPU, n2);
+    int totalEdges = 0;
+    MPI_Reduce(&localEdges, &totalEdges, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+
+    if (rank == 0) {
+        std::cout << "Size (elements): " << length << std::endl;
+        std::cout << "Processors: " << processors << std::endl;
+        std::cout << "Decompose time (sec): " << maxDecomposeTime << std::endl;
+        std::cout << "Total edges: " << totalEdges << std::endl;
+        std::cout << "Cutted edges: " << n1 * (n2 - 1) + n2 * (n1 - 1) - totalEdges << std::endl;
+    }
 
 
 
-//    int count = 0;
-//    PointDomain *res = new PointDomain[numberElemOnCPU];
-//    for(int i = 0; i < numberElemOnCPU; i++){
-//        if(localPoints[i].index == -1)
-//            continue;
-//        res[count].coord[0] = localPoints[i].coord[0];
-//        res[count].coord[1] = localPoints[i].coord[1];
-//        res[count].i = localPoints[i].index / n2;
-//        res[count].j = localPoints[i].index % n2;
-//        res[count].domain = domains[i];
-//        count++;
-//    }
-//
-//    saveResults(res, count, argv[4], n1, n2, rank);
+    int count = 0;
+    PointDomain *res = new PointDomain[numberElemOnCPU];
+    for(int i = 0; i < numberElemOnCPU; i++){
+        if(localPoints[i].index == -1)
+            continue;
+        res[count].coord[0] = localPoints[i].coord[0];
+        res[count].coord[1] = localPoints[i].coord[1];
+        res[count].i = localPoints[i].index / n2;
+        res[count].j = localPoints[i].index % n2;
+        res[count].domain = domains[i];
+        count++;
+    }
+
+    saveResults(res, count, argv[4], n1, n2, rank);
 
     //Free up the type
     MPI_Type_free(&MPI_PointType);
