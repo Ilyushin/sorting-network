@@ -1,10 +1,19 @@
 #!/usr/bin/env bash
 
-#llcancel -u edu-cmc-pv17-528-15
-#rm result_* sortingNetworkExec.* core.*
-#make clean
-#make
-#chmod +x sortingNetworkExec
+llcancel -u edu-cmc-pv17-528-15
+rm result_* sortingNetworkExec.* core.*
+make clean
+make
+chmod +x sortingNetworkExec
+
+mpisubmit.bg --nproc 128 --mode smp -e "OMP_NUM_THREADS=2" --stdout result_q_500.out --stderr result_q_500.err  sortingNetworkExec 500 500 5000 "result_500.txt"
+#mpisubmit.bg --nproc 128 --mode smp -e "OMP_NUM_THREADS=2" --stdout result_q_1000.out --stderr result_q_1000.err sortingNetworkExec 1000 1000 10000 "result_10000.txt"
+#mpisubmit.bg --nproc 128 --mode smp -e "OMP_NUM_THREADS=2" --stdout result_q_2000.out --stderr result_q_2000.err sortingNetworkExec 2000 2000 20000 "result_20000.txt"
+#mpisubmit.bg --nproc 128 --mode smp -e "OMP_NUM_THREADS=2" --stdout result_q_4000.out --stderr result_q_4000.err sortingNetworkExec 4000 4000 40000 "result_40000.txt"
+#mpisubmit.bg --nproc 128 --mode smp -e "OMP_NUM_THREADS=2" --stdout result_q_5000.out --stderr result_q_5000.err sortingNetworkExec 5000 5000 50000 "result_50000.txt"
+#mpisubmit.bg --nproc 128 --mode smp -e "OMP_NUM_THREADS=2" --stdout result_q_6000.out --stderr result_q_6000.err sortingNetworkExec 6000 6000 60000 "result_60000.txt"
+#mpisubmit.bg --nproc 128 --mode smp -e "OMP_NUM_THREADS=2" --stdout result_q_7000.out --stderr result_q_7000.err sortingNetworkExec 7000 7000 70000 "result_60000.txt"
+
 #mpisubmit.bg --nproc 128 --mode smp -e "OMP_NUM_THREADS=2" --stdout result_q_500.out --stderr result_q_500.err  sortingNetworkExec 500 500 q
 #mpisubmit.bg --nproc 128 --mode smp -e "OMP_NUM_THREADS=2" --stdout result_q_1000.out --stderr result_q_1000.err sortingNetworkExec 1000 1000 q
 #mpisubmit.bg --nproc 128 --mode smp -e "OMP_NUM_THREADS=2" --stdout result_q_2000.out --stderr result_q_2000.err sortingNetworkExec 2000 2000 q
@@ -192,10 +201,10 @@
 #mpisubmit.bg --nproc 64 --mode smp --stdout result_h_cpu_64_6000.out --stderr result_h_cpu_64_6000.err sortingNetworkExec 6000 6000 h
 #mpisubmit.bg --nproc 64 --mode smp --stdout result_h_cpu_64_7000.out --stderr result_h_cpu_64_7000.err sortingNetworkExec 7000 7000 h
 #
-mpisubmit.bg --nproc 128 --mode smp --stdout result_h_cpu_128_500.out --stderr result_h_cpu_128_500.err  sortingNetworkExec 500 500 h
-mpisubmit.bg --nproc 128 --mode smp --stdout result_h_cpu_128_1000.out --stderr result_h_cpu_128_1000.err sortingNetworkExec 1000 1000 h
-mpisubmit.bg --nproc 128 --mode smp --stdout result_h_cpu_128_2000.out --stderr result_h_cpu_128_2000.err sortingNetworkExec 2000 2000 h
-mpisubmit.bg --nproc 128 --mode smp --stdout result_h_cpu_128_4000.out --stderr result_h_cpu_128_4000.err sortingNetworkExec 4000 4000 h
-mpisubmit.bg --nproc 128 --mode smp --stdout result_h_cpu_128_5000.out --stderr result_h_cpu_128_5000.err sortingNetworkExec 5000 5000 h
-mpisubmit.bg --nproc 128 --mode smp --stdout result_h_cpu_128_6000.out --stderr result_h_cpu_128_6000.err sortingNetworkExec 6000 6000 h
-mpisubmit.bg --nproc 128 --mode smp --stdout result_h_cpu_128_7000.out --stderr result_h_cpu_128_7000.err sortingNetworkExec 7000 7000 h
+#mpisubmit.bg --nproc 128 --mode smp --stdout result_h_cpu_128_500.out --stderr result_h_cpu_128_500.err  sortingNetworkExec 500 500 h
+#mpisubmit.bg --nproc 128 --mode smp --stdout result_h_cpu_128_1000.out --stderr result_h_cpu_128_1000.err sortingNetworkExec 1000 1000 h
+#mpisubmit.bg --nproc 128 --mode smp --stdout result_h_cpu_128_2000.out --stderr result_h_cpu_128_2000.err sortingNetworkExec 2000 2000 h
+#mpisubmit.bg --nproc 128 --mode smp --stdout result_h_cpu_128_4000.out --stderr result_h_cpu_128_4000.err sortingNetworkExec 4000 4000 h
+#mpisubmit.bg --nproc 128 --mode smp --stdout result_h_cpu_128_5000.out --stderr result_h_cpu_128_5000.err sortingNetworkExec 5000 5000 h
+#mpisubmit.bg --nproc 128 --mode smp --stdout result_h_cpu_128_6000.out --stderr result_h_cpu_128_6000.err sortingNetworkExec 6000 6000 h
+#mpisubmit.bg --nproc 128 --mode smp --stdout result_h_cpu_128_7000.out --stderr result_h_cpu_128_7000.err sortingNetworkExec 7000 7000 h

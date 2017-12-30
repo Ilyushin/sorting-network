@@ -103,12 +103,6 @@ void SortingNetwork::sortBySchedule(Point **localPoints, int numberElemOnCPU, MP
     Point *gettingPoints = new Point[numberElemOnCPU];
     Point *resultPoints = new Point[numberElemOnCPU];
 
-
-    std::cout << "Before #rank" << rank <<": "<< std::endl;
-    for(int i = 0; i < numberElemOnCPU; ++i){
-        std::cout << (*localPoints)[i].coord[0] << std::endl;
-    }
-
     MPI_Status status;
     for (unsigned int i = 0; i < _permutations.size(); ++i) {
         if (_permutations[i].getLeft() == rank) {
@@ -143,7 +137,6 @@ void SortingNetwork::sortBySchedule(Point **localPoints, int numberElemOnCPU, MP
                     resultPoints[i] = (*localPoints)[locIndx];
                     --locIndx;
                 }
-
             }
         }
     }
@@ -151,10 +144,4 @@ void SortingNetwork::sortBySchedule(Point **localPoints, int numberElemOnCPU, MP
     *localPoints = resultPoints;
     delete[] gettingPoints;
     //delete[] resultPoints;
-
-    MPI_Barrier(communicator);
-    std::cout << "After #rank" << rank <<": "<< std::endl;
-    for(int i = 0; i < numberElemOnCPU; ++i){
-        std::cout << (*localPoints)[i].coord[0] << std::endl;
-    }
 }
