@@ -1,8 +1,8 @@
 #ifndef SORTINGNETWORK_DECOMPOSE_H
 #define SORTINGNETWORK_DECOMPOSE_H
 
+#include <mpi.h>
 #include "point.h"
-
 /**
 * Add a new node to the list of nodes
 *
@@ -14,6 +14,10 @@
 * @arrayStartIndx — начальный элемент в массиве.
 * @length — число элементов в массиве.
 */
-void decompose(Point *arr, int arrayStartIndx, int length, int *domains, int domainStartIndx, int k);
+void decompose(Point *arr, int arrayStartIndx, int length, int *domains, int domainStartIndx, int k, int *axis);
+
+void decomposePar(Point **arr, int length, int **domains, int domainStartIndx,
+                  int k, int *numberElemOnCPU, MPI_Datatype *MPI_PointType,
+                  MPI_Comm communicator, int *axis);
 
 #endif //SORTINGNETWORK_DECOMPOSE_H

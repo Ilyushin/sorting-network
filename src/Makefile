@@ -2,7 +2,7 @@ CXX=mpixlcxx_r
 CFLAGS=-qarch=450d -qtune=450 -O5 -c
 EXECUTABLE=sortingNetworkExec
 
-objects=main.o bsort.o heapSort.o dhSort.o permutation.o point.o quickSort.o sortingNetwork.o
+objects=main.o decompose.o heapSort.o dhSort.o permutation.o point.o quickSort.o sortingNetwork.o
 
 all: $(EXECUTABLE)
 
@@ -12,8 +12,8 @@ sortingNetworkExec: $(objects)
 main.o: 
 	$(CXX) $(CFLAGS) main.cpp
 
-bsort.o:
-	$(CXX) $(CFLAGS) -o bsort.o bsort.cpp
+decompose.o:
+	$(CXX) $(CFLAGS) -o decompose.o decompose.cpp
 
 heapSort.o:
 	$(CXX) $(CFLAGS) -o heapSort.o heapSort.cpp

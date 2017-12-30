@@ -103,8 +103,8 @@ int main(int argc, char *argv[]) {
         fillCoord(realLength, length, sortArray, n2);
     }
 
-    int numberElem = length / processors;
-    Point *localPoints = new Point[numberElem];
+    int numberElemOnCPU = length / processors;
+    Point *localPoints = new Point[numberElemOnCPU];
 
     // Create a new type of MPI
     const int n = 2;
@@ -133,16 +133,25 @@ int main(int argc, char *argv[]) {
     createMPI_PointDomainType();
 
     double sharedTime = MPI_Wtime();
-    MPI_Scatter(sortArray, numberElem, MPI_PointType, localPoints, numberElem, MPI_PointType, 0, MPI_COMM_WORLD);
+    MPI_Scatter(sortArray, numberElemOnCPU, MPI_PointType, localPoints, numberElemOnCPU, MPI_PointType, 0, MPI_COMM_WORLD);
     sharedTime = MPI_Wtime() - sharedTime;
 
+    int axis = 0;
     int *domains = new int[length];
     if(processors == 1) {
-        decompose(sortArray, 0, length, domains, 0, k);
-        for(int i = 0; i < length; ++i){
+        decompose(sortArray, 0, length, domains, 0, k, &axis);
+        /*for(int i = 0; i < length; ++i){
             std::cout << i << "   " << domains[i] << std::endl;
-        }
+        }*/
+    } else {
+        decomposePar(&localPoints, numberElemOnCPU, &domains, 0, k, &numberElemOnCPU,
+                     &MPI_PointType, MPI_COMM_WORLD, &axis);
     }
+
+    /*std::cout << "After #rank" << rank <<": "<< std::endl;
+    for(int i = 0; i < numberElemOnCPU; ++i){
+        std::cout << localPoints[i].coord[0] << std::endl;
+    }*/
 
 
     //Free up the type

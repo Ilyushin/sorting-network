@@ -2,7 +2,9 @@
 #define SORTINGNETWORK_SORTINGNETWORK_H
 
 #include <vector>
+#include <mpi.h>
 #include "permutation.h"
+#include "point.h"
 
 typedef std::vector<int> int_vec_t;
 typedef std::vector<int>::iterator int_vec_itr;
@@ -25,5 +27,7 @@ public:
     permutation_vec_t getPermutations() { return _permutations; };
 
     void buildSchedule();
+    void sortBySchedule(Point **localPoints, int numberElemOnCPU, MPI_Datatype *MPI_PointType,
+                        MPI_Comm communicator, int processors, int axis);
 };
 #endif //SORTINGNETWORK_SORTINGNETWORK_H

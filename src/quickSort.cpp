@@ -16,6 +16,6 @@ int compareY(const void *a, const void *b) {
     if (((Point *) a)->coord[1] > ((Point *) b)->coord[1]) return 1;
 }
 
-void quickSort(int length, Point *arr, int axis) {
-    qsort(arr, length, sizeof(Point), (axis == 1 ? compareY : compareX));
+void quickSort(int length, Point *arr, int *axis) {
+    qsort(arr, length, sizeof(Point), (*axis == 1 ? compareY : compareX));
 }
