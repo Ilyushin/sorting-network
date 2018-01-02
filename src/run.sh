@@ -5,7 +5,7 @@ make clean
 make
 chmod +x sortingNetworkExec
 
-mpisubmit.bg --nproc 4 --mode smp -e "OMP_NUM_THREADS=2" --stdout result_q_500.out --stderr result_q_500.err  sortingNetworkExec 10 10 4 "result_500.txt"
+mpisubmit.bg --nproc 128 --mode smp -e "OMP_NUM_THREADS=2" --stdout result_q_500.out --stderr result_q_500.err  sortingNetworkExec 500 500 5000 "result_500.txt"
 #mpisubmit.bg --nproc 128 --mode smp -e "OMP_NUM_THREADS=2" --stdout result_q_1000.out --stderr result_q_1000.err sortingNetworkExec 1000 1000 10000 "result_10000.txt"
 #mpisubmit.bg --nproc 128 --mode smp -e "OMP_NUM_THREADS=2" --stdout result_q_2000.out --stderr result_q_2000.err sortingNetworkExec 2000 2000 20000 "result_20000.txt"
 #mpisubmit.bg --nproc 128 --mode smp -e "OMP_NUM_THREADS=2" --stdout result_q_4000.out --stderr result_q_4000.err sortingNetworkExec 4000 4000 40000 "result_40000.txt"

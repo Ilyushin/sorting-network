@@ -2,4 +2,4 @@
 make clean
 make -f MakefileUbuntu
 chmod +x sortingNetworkExec
-mpirun -np 4 ./sortingNetworkExec 10 10 4 "result.txt"
+mpirun -np 4 ./sortingNetworkExec 100 100 4 "result.txt"
