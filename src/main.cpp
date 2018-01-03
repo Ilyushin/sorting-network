@@ -160,10 +160,15 @@ Point *align(Point *array, int size, int procNumber) {
 
 void decomposePar(Point **arr, int length, int **domains, int domainStartIndx,
                   int k, int *numberElemOnCPU, MPI_Comm communicator, MPI_Datatype *MPI_PointType) {
-
     int rank, processors;
     MPI_Comm_rank(communicator, &rank);
     MPI_Comm_size(communicator, &processors);
+
+    std::cout << "11 Rank: " << rank << " *arr - " << (*arr)
+              << "; length - " << length
+              << "; k - " << k
+              << "; processors - " << processors
+              << "; arr[0]: " << (*arr)[0].index << std::endl;
 
     int realLength;
     if (processors == 1) {
@@ -176,7 +181,7 @@ void decomposePar(Point **arr, int length, int **domains, int domainStartIndx,
             res[j++] = (*arr)[i];
         }
 
-        if (rank == 0)
+        //if (rank == 2)
             std::cout << "3 Rank: " << rank << " *arr - " << (*arr)
                       << "; length - " << length
                       << "; k - " << k
@@ -188,7 +193,7 @@ void decomposePar(Point **arr, int length, int **domains, int domainStartIndx,
 
         //deleteArrPtr(tmp);
 
-        if (rank == 0)
+        //if (rank == 2)
             std::cout << "4 Rank: " << rank << std::endl;
 
 
@@ -208,7 +213,17 @@ void decomposePar(Point **arr, int length, int **domains, int domainStartIndx,
                 continue;
             res[realLength++] = (*arr)[i];
         }
+
+        //if (rank == 2)
+
         deleteArrPtr(*arr);
+
+        //if (rank == 2)
+        std::cout << "10 Rank: " << rank << " *arr - " << (*arr)
+                  << "; length - " << length
+                  << "; k - " << k
+                  << "; processors - " << processors
+                  << "; arr[0]: " << (*arr)[0].index << std::endl;
         *arr = res;
         *domains = new int[realLength];
         for (int i = 0; i < realLength; i++)
@@ -221,7 +236,7 @@ void decomposePar(Point **arr, int length, int **domains, int domainStartIndx,
     SortingNetwork *network = new SortingNetwork(processors);
     network->buildSchedule();
     network->sortBySchedule(arr, length, MPI_PointType, communicator, axis);
-    delete network;
+    //delete network;
 
 
     int k1 = (k + 1) / 2;
@@ -251,13 +266,16 @@ void decomposePar(Point **arr, int length, int **domains, int domainStartIndx,
             Point *temp = align((*arr) + middle, (*numberElemOnCPU) - middle,
                                 rightCPUs - 1);
 
-            for (int i = leftCPUs + 1, j = 0; i < processors; i++, j++)
+            for (int i = leftCPUs + 1, j = 0; i < processors; i++, j++) {
                 MPI_Send(temp + j * epp, epp, *MPI_PointType, i, 0, communicator);
+            }
             deleteArrPtr(temp);
 
-            if (rank == 0)
+            //if (rank == 2)
                 std::cout << "1 Rank: " << rank << " *arr - " << (*arr)
-                        << "; numberElemOnCPU+epp: " << (*numberElemOnCPU + epp)
+                          << "; length - " << length
+                          << "; k - " << k
+                          << "; processors - " << processors
                           << "; arr[0]: " << (*arr)[0].index << std::endl;
 
             decomposePar(arr, length1, domains, 0, k1,
@@ -271,10 +289,12 @@ void decomposePar(Point **arr, int length, int **domains, int domainStartIndx,
             deleteArrPtr(*arr);
             *arr = arrNew;
 
-            if (rank == 0)
-                std::cout << "2 Rank: " << rank
-                          << " *arr - " << (*arr)
-                          << "; numberElemOnCPU+epp: "<< (*numberElemOnCPU + epp) << std::endl;
+            //if (rank == 2)
+                std::cout << "2 Rank: " << rank << " *arr - " << (*arr)
+                          << "; length - " << length
+                          << "; k - " << k
+                          << "; processors - " << processors
+                          << "; arr[0]: " << (*arr)[0].index << std::endl;
 
             decomposePar(arr, length2, domains, domainStartIndx + k1, k2,
                          numberElemOnCPU, new_comm, MPI_PointType);
@@ -287,19 +307,52 @@ void decomposePar(Point **arr, int length, int **domains, int domainStartIndx,
         int epp = ceil(middle / (double) leftCPUs);
         if (rank == leftCPUs) {
             Point *temp = align(*arr, middle, leftCPUs);
-            for (int i = 0; i < leftCPUs; i++)
+            for (int i = 0; i < leftCPUs; i++) {
                 MPI_Send(temp + i * epp, epp, *MPI_PointType, i, 0, communicator);
+            }
             deleteArrPtr(temp);
+
+            //if (rank == 2)
+            std::cout << "6 Rank: " << rank << " *arr - " << (*arr)
+                      << "; length - " << length
+                      << "; k - " << k
+                      << "; processors - " << processors
+                      << "; arr[0]: " << (*arr)[0].index << std::endl;
+
         } else {
             Point *arrNew = new Point[*numberElemOnCPU + epp];
             MPI_Recv(arrNew + (*numberElemOnCPU), epp, *MPI_PointType, leftCPUs, 0,
                      communicator, &status);
             memcpy(arrNew, *arr, (*numberElemOnCPU) * sizeof(Point));
             *numberElemOnCPU += epp;
+
+            //if (rank == 2)
+            std::cout << "7 Rank: " << rank << " *arr - " << (*arr)
+                      << "; length - " << length
+                      << "; k - " << k
+                      << "; processors - " << processors
+                      << "; arr[0]: " << (*arr)[0].index << std::endl;
+
             deleteArrPtr(*arr);
             *arr = arrNew;
+
+            //if (rank == 2)
+            std::cout << "8 Rank: " << rank << " *arr - " << (*arr)
+                      << "; length - " << length
+                      << "; k - " << k
+                      << "; processors - " << processors
+                      << "; arr[0]: " << (*arr)[0].index << std::endl;
+
         }
     }
+
+    //if (rank == 2)
+        std::cout << "5 Rank: " << rank << " *arr - " << (*arr)
+                  << "; length - " << length
+                  << "; k - " << k
+                  << "; processors - " << processors
+                  << "; arr[0]: " << (*arr)[0].index << std::endl;
+
     if (rank < leftCPUs) {
         decomposePar(arr, length1, domains, domainStartIndx, k1,
                      numberElemOnCPU, new_comm, MPI_PointType);
@@ -429,7 +482,7 @@ int main(int argc, char *argv[]) {
 //    saveResults(res, count, argv[4], n1, n2, rank);
 
     //Free up the type
-    MPI_Type_free(&MPI_PointType);
+    //MPI_Type_free(&MPI_PointType);
     //MPI_Type_free(&MPI_PointDomainType);
     if (rank == 0) {
         //deleteArrPtr(sortArray);
