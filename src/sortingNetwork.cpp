@@ -1,5 +1,10 @@
+#include <iostream>
 #include "sortingNetwork.h"
 #include <math.h>
+#include <omp.h>
+#include "quickSort.h"
+#include "heapSort.h"
+#include "dhSort.h"
 
 SortingNetwork::SortingNetwork(){
     _size = 0;
@@ -13,6 +18,7 @@ SortingNetwork::SortingNetwork(int n){
 
 void SortingNetwork::buildSchedule(){
     _permutations.clear();
+    _numberTacts = 0;
 
     int_vec_t arr;
     if (_size == 1) {
@@ -45,7 +51,7 @@ void SortingNetwork::buildSchedule(){
                     right = i + d;
                     if (_checkPar(currentComp, left, right)) {
                         //Copy to _permutations
-                        for(int i = 0; i < currentComp.size(); ++i){
+                        for(unsigned int i = 0; i < currentComp.size(); ++i){
                             _permutations.push_back(currentComp[i]);
                         }
                         currentComp.clear();
@@ -64,17 +70,78 @@ void SortingNetwork::buildSchedule(){
         p /= 2;
     }
 
+    for(unsigned int i = 0; i < currentComp.size(); ++i){
+        _permutations.push_back(currentComp[i]);
+    }
 }
 
 bool SortingNetwork::_checkPar(permutation_vec_t &currentComp, int left, int right) {
-    bool result = false;
-    for(int i = 0; i<currentComp.size(); ++i){
+    for(unsigned int i = 0; i < currentComp.size(); ++i){
         Permutation curPerm = currentComp[i];
-        if(curPerm.getLeft() == left || curPerm.getRight() == right){
-            result = true;
-            break;
+        if(curPerm.getLeft() == left || curPerm.getRight() == right ||
+            curPerm.getLeft() == right || curPerm.getRight() == left){
+            return true;
+        }
+    }
+    return false;
+}
+
+void SortingNetwork::sortBySchedule(Point **localPoints, int numberElemOnCPU, MPI_Datatype *MPI_PointType,
+                                    MPI_Comm communicator, int axis) {
+    int rank;
+    MPI_Comm_rank(communicator, &rank);
+
+    int threads = 2;
+    omp_set_num_threads(threads);
+
+    if (numberElemOnCPU <= 50000) {
+        dhSort(numberElemOnCPU, *localPoints, axis);
+    } else {
+        dhSortPar(numberElemOnCPU, *localPoints, axis, threads);
+    }
+
+    Point *gettingPoints = new Point[numberElemOnCPU];
+    Point *resultPoints = new Point[numberElemOnCPU];
+
+    MPI_Status status;
+    for (unsigned int i = 0; i < _permutations.size(); ++i) {
+        if (_permutations[i].getLeft() == rank) {
+            MPI_Send(*localPoints, numberElemOnCPU, *MPI_PointType, _permutations[i].getRight(), 0, communicator);
+            MPI_Recv(gettingPoints, numberElemOnCPU, *MPI_PointType, _permutations[i].getRight(), 0, communicator,
+                     &status);
+
+            int locIndx = 0;
+            int getIndx = 0;
+            for (int i = 0; i < numberElemOnCPU; ++i) {
+                if ((*localPoints)[locIndx].coord[axis] > gettingPoints[getIndx].coord[axis]) {
+                    resultPoints[i] = gettingPoints[getIndx];
+                    ++getIndx;
+                } else {
+                    resultPoints[i] = (*localPoints)[locIndx];
+                    ++locIndx;
+                }
+            }
+
+        } else if (_permutations[i].getRight() == rank) {
+            MPI_Recv(gettingPoints, numberElemOnCPU, *MPI_PointType, _permutations[i].getLeft(), 0, communicator,
+                     &status);
+            MPI_Send(*localPoints, numberElemOnCPU, *MPI_PointType, _permutations[i].getLeft(), 0, communicator);
+
+            int locIndx = numberElemOnCPU - 1;
+            int getIndx = numberElemOnCPU - 1;
+            for (int i = numberElemOnCPU - 1; i >= 0; --i) {
+                if ((*localPoints)[locIndx].coord[axis] < gettingPoints[getIndx].coord[axis]) {
+                    resultPoints[i] = gettingPoints[getIndx];
+                    --getIndx;
+                } else {
+                    resultPoints[i] = (*localPoints)[locIndx];
+                    --locIndx;
+                }
+            }
         }
     }
 
-    return result;
+    delete[] (*localPoints);
+    *localPoints = resultPoints;
+    delete[] gettingPoints;
 }
