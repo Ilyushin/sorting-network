@@ -1,22 +1,24 @@
 #include <iostream>
+#include "sortingNetwork.h"
 #include <math.h>
 #include <omp.h>
-#include "sortingNetwork.h"
+#include "quickSort.h"
 #include "heapSort.h"
 #include "dhSort.h"
 
-SortingNetwork::SortingNetwork() {
+SortingNetwork::SortingNetwork(){
     _size = 0;
     _numberTacts = 0;
 }
 
-SortingNetwork::SortingNetwork(int n) {
+SortingNetwork::SortingNetwork(int n){
     _size = n;
     _numberTacts = 0;
 }
 
-void SortingNetwork::buildSchedule() {
+void SortingNetwork::buildSchedule(){
     _permutations.clear();
+    _numberTacts = 0;
 
     int_vec_t arr;
     if (_size == 1) {
@@ -49,7 +51,7 @@ void SortingNetwork::buildSchedule() {
                     right = i + d;
                     if (_checkPar(currentComp, left, right)) {
                         //Copy to _permutations
-                        for (unsigned int i = 0; i < currentComp.size(); ++i) {
+                        for(unsigned int i = 0; i < currentComp.size(); ++i){
                             _permutations.push_back(currentComp[i]);
                         }
                         currentComp.clear();
@@ -68,19 +70,20 @@ void SortingNetwork::buildSchedule() {
         p /= 2;
     }
 
+    for(unsigned int i = 0; i < currentComp.size(); ++i){
+        _permutations.push_back(currentComp[i]);
+    }
 }
 
 bool SortingNetwork::_checkPar(permutation_vec_t &currentComp, int left, int right) {
-    bool result = false;
-    for (unsigned int i = 0; i < currentComp.size(); ++i) {
+    for(unsigned int i = 0; i < currentComp.size(); ++i){
         Permutation curPerm = currentComp[i];
-        if (curPerm.getLeft() == left || curPerm.getRight() == right) {
-            result = true;
-            break;
+        if(curPerm.getLeft() == left || curPerm.getRight() == right ||
+           curPerm.getLeft() == right || curPerm.getRight() == left){
+            return true;
         }
     }
-
-    return result;
+    return false;
 }
 
 void SortingNetwork::sortBySchedule(Point **localPoints, int numberElemOnCPU, MPI_Datatype *MPI_PointType,
@@ -88,16 +91,13 @@ void SortingNetwork::sortBySchedule(Point **localPoints, int numberElemOnCPU, MP
     int rank;
     MPI_Comm_rank(communicator, &rank);
 
-    int threads = 0;
-    #pragma omp parallel
-    {
-        threads = omp_get_num_threads();
-    }
+    int threads = 2;
+    omp_set_num_threads(threads);
 
     if (numberElemOnCPU <= 50000) {
-        heapSort(numberElemOnCPU, *localPoints);
+        dhSort(numberElemOnCPU, *localPoints, axis);
     } else {
-        dhSortPar(numberElemOnCPU, *localPoints, false, threads);
+        dhSortPar(numberElemOnCPU, *localPoints, axis, threads);
     }
 
     Point *gettingPoints = new Point[numberElemOnCPU];
@@ -141,7 +141,7 @@ void SortingNetwork::sortBySchedule(Point **localPoints, int numberElemOnCPU, MP
         }
     }
 
+    delete[] (*localPoints);
     *localPoints = resultPoints;
     delete[] gettingPoints;
-    //delete[] resultPoints;
 }

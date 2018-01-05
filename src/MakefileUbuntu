@@ -7,7 +7,7 @@ objects=main.o heapSort.o dhSort.o permutation.o point.o quickSort.o sortingNetw
 all: $(EXECUTABLE)
 
 sortingNetworkExec: $(objects)
-	$(CXX) -Wall -std=c++11 -fopenmp -o $(EXECUTABLE) $(objects)
+	$(CXX) -g -Wall -std=c++11 -fopenmp -o $(EXECUTABLE) $(objects)
 
 main.o: 
 	$(CXX) $(CFLAGS) main.cpp
